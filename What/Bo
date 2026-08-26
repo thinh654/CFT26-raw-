@@ -1,243 +1,209 @@
 --[[
-    THINH HUB V6 - MENU CUSTOM (KHÔNG RAYFIELD)
-    - Loading 7s + avatar + tên
-    - Menu riêng kéo thả được
-    - Hoạt động mobile + PC
-    - Auto block + nhiều tính năng khác
+    THINH HUB V1 - MENU CUSTOM (KHÔNG RAYFIELD)
+    ✅ Loading 7s + avatar + tên
+    ✅ Menu kéo thả, mobile + PC
+    ✅ Auto block (fix block sớm)
+    ✅ Đầy đủ tính năng: Combat, Player, Teleport, Farm, Misc, Debug, Info
 ]]
 
 ----------------------------------------------------------------
 -- SERVICES
 ----------------------------------------------------------------
-local Players           = game:GetService("Players")
-local TweenService      = game:GetService("TweenService")
-local UserInputService  = game:GetService("UserInputService")
-local VirtualInputManager = game:GetService("VirtualInputManager")
-local RunService        = game:GetService("RunService")
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local UIS = game:GetService("UserInputService")
+local VIM = game:GetService("VirtualInputManager")
+local RunService = game:GetService("RunService")
+local HttpService = game:GetService("HttpService")
+local TeleportService = game:GetService("TeleportService")
 
-local LocalPlayer = Players.LocalPlayer
-local PlayerGui   = LocalPlayer:WaitForChild("PlayerGui")
-
-local IsMobile = UserInputService.TouchEnabled
-   and not UserInputService.KeyboardEnabled
-
-----------------------------------------------------------------
--- HÀM TIỆN ÍCH
-----------------------------------------------------------------
-local function Tween(obj, props, duration, style, dir)
-   style = style or Enum.EasingStyle.Quad
-   dir   = dir   or Enum.EasingDirection.Out
-   TweenService:Create(obj, TweenInfo.new(duration, style, dir), props):Play()
-end
-
-local function Corner(parent, radius)
-   local c = Instance.new("UICorner")
-   c.CornerRadius = UDim.new(0, radius or 8)
-   c.Parent = parent
-   return c
-end
-
-local function Stroke(parent, color, thick)
-   local s = Instance.new("UIStroke")
-   s.Color = color or Color3.fromRGB(70, 130, 255)
-   s.Thickness = thick or 1
-   s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-   s.Parent = parent
-   return s
-end
-
-local function Padding(parent, t, r, b, l)
-   local p = Instance.new("UIPadding")
-   p.PaddingTop    = UDim.new(0, t or 0)
-   p.PaddingRight  = UDim.new(0, r or 0)
-   p.PaddingBottom = UDim.new(0, b or 0)
-   p.PaddingLeft   = UDim.new(0, l or 0)
-   p.Parent = parent
-   return p
-end
+local LP = Players.LocalPlayer
+local PGui = LP:WaitForChild("PlayerGui")
+local IsMobile = UIS.TouchEnabled and not UIS.KeyboardEnabled
 
 ----------------------------------------------------------------
--- 1) LOADING SCREEN 7 GIÂY
+-- HELPERS
+----------------------------------------------------------------
+local function T(obj, props, dur, style, dir)
+   TweenService:Create(obj, TweenInfo.new(
+      dur or 0.25,
+      style or Enum.EasingStyle.Quad,
+      dir   or Enum.EasingDirection.Out
+   ), props):Play()
+end
+
+local function Corner(p, r) local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, r or 8); c.Parent = p; return c end
+local function Stroke(p, col, t) local s = Instance.new("UIStroke"); s.Color = col or Color3.fromRGB(70,130,255); s.Thickness = t or 1.5; s.Parent = p; return s end
+local function Pad(p, t, r, b, l) local x = Instance.new("UIPadding"); x.PaddingTop=t or 0; x.PaddingRight=r or 0; x.PaddingBottom=b or 0; x.PaddingLeft=l or 0; x.Parent = p end
+
+----------------------------------------------------------------
+-- 1) LOADING 7 GIÂY
 ----------------------------------------------------------------
 local Loader = Instance.new("ScreenGui")
-Loader.Name = "ThinhHub_Loader"
 Loader.IgnoreGuiInset = true
 Loader.DisplayOrder = 999
 Loader.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-Loader.Parent = PlayerGui
+Loader.Parent = PGui
 
--- Background
-local LoaderBG = Instance.new("Frame")
-LoaderBG.Size = UDim2.fromScale(1, 1)
-LoaderBG.BackgroundColor3 = Color3.fromRGB(8, 10, 18)
-LoaderBG.BorderSizePixel = 0
-LoaderBG.Parent = Loader
-
-local LoaderGrad = Instance.new("UIGradient")
-LoaderGrad.Color = ColorSequence.new({
-   ColorSequenceKeypoint.new(0, Color3.fromRGB(15, 20, 35)),
+local LBG = Instance.new("Frame")
+LBG.Size = UDim2.fromScale(1,1)
+LBG.BackgroundColor3 = Color3.fromRGB(8, 10, 18)
+LBG.BorderSizePixel = 0
+LBG.Parent = Loader
+local LG = Instance.new("UIGradient")
+LG.Color = ColorSequence.new({
+   ColorSequenceKeypoint.new(0, Color3.fromRGB(20, 25, 50)),
    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(8, 10, 18)),
-   ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 15, 40)),
+   ColorSequenceKeypoint.new(1, Color3.fromRGB(30, 15, 50)),
 })
-LoaderGrad.Rotation = 30
-LoaderGrad.Parent = LoaderBG
+LG.Rotation = 30
+LG.Parent = LBG
 
--- Partical dots nền
-for i = 1, 20 do
-   local dot = Instance.new("Frame")
-   dot.Size = UDim2.fromOffset(math.random(2,4), math.random(2,4))
-   dot.Position = UDim2.new(math.random(), math.random(), 0, 0)
-   dot.BackgroundColor3 = Color3.fromRGB(70, 130, 255)
-   dot.BackgroundTransparency = 0.5
-   dot.BorderSizePixel = 0
-   dot.Parent = LoaderBG
-   Corner(dot, 99)
-
+-- Particle dots
+for i = 1, 25 do
+   local d = Instance.new("Frame")
+   d.Size = UDim2.fromOffset(math.random(2,5), math.random(2,5))
+   d.Position = UDim2.new(math.random(), math.random(), 0, 0)
+   d.BackgroundColor3 = Color3.fromRGB(80, 150, 255)
+   d.BackgroundTransparency = 0.4
+   d.BorderSizePixel = 0
+   d.Parent = LBG
+   Corner(d, 99)
    task.spawn(function()
-      while dot.Parent do
-         local t = math.random() * 3
-         Tween(dot, {BackgroundTransparency = 0}, t, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
+      while d.Parent do
+         local t = math.random(20, 50) / 10
+         T(d, {BackgroundTransparency = 0.1}, t, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
          task.wait(t)
-         Tween(dot, {BackgroundTransparency = 0.8}, t, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
+         T(d, {BackgroundTransparency = 0.9}, t, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
          task.wait(t)
       end
    end)
 end
 
--- Khung chính
+-- Card
 local Card = Instance.new("Frame")
 Card.AnchorPoint = Vector2.new(0.5, 0.5)
 Card.Position = UDim2.fromScale(0.5, 0.5)
-Card.Size = UDim2.new(0, 460, 0, 300)
+Card.Size = UDim2.new(0, 480, 0, 320)
 Card.BackgroundColor3 = Color3.fromRGB(22, 25, 40)
 Card.BorderSizePixel = 0
-Card.Parent = LoaderBG
+Card.Parent = LBG
 Corner(Card, 16)
 Stroke(Card, Color3.fromRGB(70, 130, 255), 2)
 
--- Title
-local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, 0, 0, 48)
-Title.Position = UDim2.new(0, 0, 0, 22)
-Title.BackgroundTransparency = 1
-Title.Font = Enum.Font.GothamBold
-Title.Text = "⚡ THINH HUB"
-Title.TextSize = 38
-Title.TextColor3 = Color3.fromRGB(120, 180, 255)
-Title.Parent = Card
+local LTitle = Instance.new("TextLabel")
+LTitle.Size = UDim2.new(1, 0, 0, 50)
+LTitle.Position = UDim2.new(0, 0, 0, 22)
+LTitle.BackgroundTransparency = 1
+LTitle.Font = Enum.Font.GothamBold
+LTitle.Text = "⚡ THINH HUB"
+LTitle.TextSize = 40
+LTitle.TextColor3 = Color3.fromRGB(120, 180, 255)
+LTitle.Parent = Card
 
-local Subtitle = Instance.new("TextLabel")
-Subtitle.Size = UDim2.new(1, 0, 0, 18)
-Subtitle.Position = UDim2.new(0, 0, 0, 72)
-Subtitle.BackgroundTransparency = 1
-Subtitle.Font = Enum.Font.Gotham
-Subtitle.Text = "V6 — Custom Menu | Auto Block JJS"
-Subtitle.TextSize = 13
-Subtitle.TextColor3 = Color3.fromRGB(160, 170, 200)
-Subtitle.Parent = Card
+local LSub = Instance.new("TextLabel")
+LSub.Size = UDim2.new(1, 0, 0, 18)
+LSub.Position = UDim2.new(0, 0, 0, 74)
+LSub.BackgroundTransparency = 1
+LSub.Font = Enum.Font.Gotham
+LSub.Text = "V1 - Auto Block JJS"
+LSub.TextSize = 13
+LSub.TextColor3 = Color3.fromRGB(160, 170, 200)
+LSub.Parent = Card
 
--- Avatar
-local Avatar = Instance.new("ImageLabel")
-Avatar.AnchorPoint = Vector2.new(0.5, 0)
-Avatar.Position = UDim2.new(0.5, 0, 0, 102)
-Avatar.Size = UDim2.fromOffset(96, 96)
-Avatar.BackgroundColor3 = Color3.fromRGB(40, 45, 65)
-Avatar.BorderSizePixel = 0
-Avatar.Parent = Card
-Corner(Avatar, 99)
-Stroke(Avatar, Color3.fromRGB(70, 130, 255), 3)
+local Av = Instance.new("ImageLabel")
+Av.AnchorPoint = Vector2.new(0.5, 0)
+Av.Position = UDim2.new(0.5, 0, 0, 105)
+Av.Size = UDim2.fromOffset(100, 100)
+Av.BackgroundColor3 = Color3.fromRGB(40, 45, 65)
+Av.BorderSizePixel = 0
+Av.Parent = Card
+Corner(Av, 99)
+Stroke(Av, Color3.fromRGB(70, 130, 255), 3)
 
 local ok, url = pcall(function()
-   return Players:GetUserThumbnailAsync(
-      LocalPlayer.UserId,
-      Enum.ThumbnailType.HeadShot,
-      Enum.ThumbnailSize.Size150x150
-   )
+   return Players:GetUserThumbnailAsync(LP.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size150x150)
 end)
-if ok then Avatar.Image = url end
+if ok then Av.Image = url end
 
--- Tên
-local UserTag = Instance.new("TextLabel")
-UserTag.Size = UDim2.new(1, -40, 0, 22)
-UserTag.Position = UDim2.new(0, 20, 0, 208)
-UserTag.BackgroundTransparency = 1
-UserTag.Font = Enum.Font.GothamBold
-UserTag.Text = "@" .. LocalPlayer.Name
-UserTag.TextSize = 17
-UserTag.TextColor3 = Color3.fromRGB(255, 255, 255)
-UserTag.TextXAlignment = Enum.TextXAlignment.Left
-UserTag.Parent = Card
+local Un = Instance.new("TextLabel")
+Un.Size = UDim2.new(1, -40, 0, 22)
+Un.Position = UDim2.new(0, 20, 0, 215)
+Un.BackgroundTransparency = 1
+Un.Font = Enum.Font.GothamBold
+Un.Text = "@" .. LP.Name
+Un.TextSize = 17
+Un.TextColor3 = Color3.fromRGB(255, 255, 255)
+Un.TextXAlignment = Enum.TextXAlignment.Left
+Un.Parent = Card
 
-local DispTag = Instance.new("TextLabel")
-DispTag.Size = UDim2.new(1, -40, 0, 16)
-DispTag.Position = UDim2.new(0, 20, 0, 228)
-DispTag.BackgroundTransparency = 1
-DispTag.Font = Enum.Font.Gotham
-DispTag.Text = LocalPlayer.DisplayName
-DispTag.TextSize = 12
-DispTag.TextColor3 = Color3.fromRGB(140, 150, 180)
-DispTag.TextXAlignment = Enum.TextXAlignment.Left
-DispTag.Parent = Card
+local Dn = Instance.new("TextLabel")
+Dn.Size = UDim2.new(1, -40, 0, 16)
+Dn.Position = UDim2.new(0, 20, 0, 235)
+Dn.BackgroundTransparency = 1
+Dn.Font = Enum.Font.Gotham
+Dn.Text = LP.DisplayName
+Dn.TextSize = 12
+Dn.TextColor3 = Color3.fromRGB(140, 150, 180)
+Dn.TextXAlignment = Enum.TextXAlignment.Left
+Dn.Parent = Card
 
--- Bar nền
 local BarBG = Instance.new("Frame")
 BarBG.AnchorPoint = Vector2.new(0.5, 0)
-BarBG.Position = UDim2.new(0.5, 0, 0, 254)
+BarBG.Position = UDim2.new(0.5, 0, 0, 262)
 BarBG.Size = UDim2.new(0.8, 0, 0, 6)
 BarBG.BackgroundColor3 = Color3.fromRGB(35, 40, 60)
 BarBG.BorderSizePixel = 0
 BarBG.Parent = Card
 Corner(BarBG, 99)
 
-local BarFill = Instance.new("Frame")
-BarFill.Size = UDim2.new(0, 0, 1, 0)
-BarFill.BackgroundColor3 = Color3.fromRGB(80, 150, 255)
-BarFill.BorderSizePixel = 0
-BarFill.Parent = BarBG
-Corner(BarFill, 99)
-
-local BarGrad = Instance.new("UIGradient")
-BarGrad.Color = ColorSequence.new({
+local BarF = Instance.new("Frame")
+BarF.Size = UDim2.new(0, 0, 1, 0)
+BarF.BackgroundColor3 = Color3.fromRGB(80, 150, 255)
+BarF.BorderSizePixel = 0
+BarF.Parent = BarBG
+Corner(BarF, 99)
+local BarG = Instance.new("UIGradient")
+BarG.Color = ColorSequence.new({
    ColorSequenceKeypoint.new(0, Color3.fromRGB(70, 130, 255)),
    ColorSequenceKeypoint.new(1, Color3.fromRGB(150, 220, 255)),
 })
-BarGrad.Parent = BarFill
+BarG.Parent = BarF
 
--- Status
-local StatusLbl = Instance.new("TextLabel")
-StatusLbl.Size = UDim2.new(1, 0, 0, 16)
-StatusLbl.Position = UDim2.new(0, 0, 1, -18)
-StatusLbl.BackgroundTransparency = 1
-StatusLbl.Font = Enum.Font.Gotham
-StatusLbl.Text = "Đang khởi tạo..."
-StatusLbl.TextSize = 11
-StatusLbl.TextColor3 = Color3.fromRGB(140, 150, 180)
-StatusLbl.Parent = Card
+local StTxt = Instance.new("TextLabel")
+StTxt.Size = UDim2.new(1, 0, 0, 16)
+StTxt.Position = UDim2.new(0, 0, 1, -20)
+StTxt.BackgroundTransparency = 1
+StTxt.Font = Enum.Font.Gotham
+StTxt.Text = "Đang khởi tạo..."
+StTxt.TextSize = 11
+StTxt.TextColor3 = Color3.fromRGB(140, 150, 180)
+StTxt.Parent = Card
 
--- Hiệu ứng fade in
+-- Fade in
 Card.BackgroundTransparency = 1
 for _, v in pairs(Card:GetChildren()) do
    if v:IsA("TextLabel") then v.TextTransparency = 1
    elseif v:IsA("ImageLabel") then v.ImageTransparency = 1
    elseif v:IsA("Frame") then v.BackgroundTransparency = 1 end
 end
-Avatar.ImageTransparency = 1
-Tween(Card, {BackgroundTransparency = 0}, 0.4)
+Av.ImageTransparency = 1
+T(Card, {BackgroundTransparency = 0}, 0.4)
 for _, v in pairs(Card:GetChildren()) do
-   if v:IsA("TextLabel") then Tween(v, {TextTransparency = 0}, 0.5)
-   elseif v:IsA("ImageLabel") then Tween(v, {ImageTransparency = 0}, 0.5) end
+   if v:IsA("TextLabel") then T(v, {TextTransparency = 0}, 0.5)
+   elseif v:IsA("ImageLabel") then T(v, {ImageTransparency = 0}, 0.5) end
 end
-Tween(Avatar, {ImageTransparency = 0}, 0.5)
-Tween(BarBG, {BackgroundTransparency = 0}, 0.3)
-Tween(StatusLbl, {TextTransparency = 0}, 0.3)
+T(Av, {ImageTransparency = 0}, 0.5)
+T(BarBG, {BackgroundTransparency = 0}, 0.3)
+T(StTxt, {TextTransparency = 0}, 0.3)
 task.wait(0.6)
 
--- Hiệu ứng xoay avatar + scale
+-- Avatar float
 task.spawn(function()
-   while Avatar and Avatar.Parent do
-      Tween(Avatar, {Rotation = 5}, 1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
+   while Av and Av.Parent do
+      T(Av, {Rotation = 4, Position = Av.Position + UDim2.fromOffset(0, -3)}, 1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
       task.wait(1)
-      Tween(Avatar, {Rotation = -5}, 1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
+      T(Av, {Rotation = -4, Position = Av.Position + UDim2.fromOffset(0, 3)}, 1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
       task.wait(1)
    end
 end)
@@ -247,106 +213,97 @@ local steps = {
    {p = 0.28, t = "Đang quét PlayerGui..."},
    {p = 0.48, t = "Đang nạp attack IDs..."},
    {p = 0.68, t = "Đang kết nối animations..."},
-   {p = 0.86, t = "Đang build UI..."},
+   {p = 0.86, t = "Đang build menu..."},
    {p = 1.00, t = "Xong! Đang vào menu..."},
 }
 for _, s in ipairs(steps) do
-   StatusLbl.Text = s.t
-   Tween(BarFill, {Size = UDim2.new(s.p, 0, 1, 0)}, 0.8)
+   StTxt.Text = s.t
+   T(BarF, {Size = UDim2.new(s.p, 0, 1, 0)}, 0.8)
    task.wait(7 / #steps)
 end
 
 -- Fade out
-Tween(Card, {BackgroundTransparency = 1}, 0.4)
-Tween(LoaderBG, {BackgroundTransparency = 1}, 0.4)
+T(Card, {BackgroundTransparency = 1}, 0.4)
+T(LBG, {BackgroundTransparency = 1}, 0.4)
 for _, v in pairs(Card:GetDescendants()) do
-   if v:IsA("TextLabel") then Tween(v, {TextTransparency = 1}, 0.3)
-   elseif v:IsA("ImageLabel") then Tween(v, {ImageTransparency = 1}, 0.3)
-   elseif v:IsA("Frame") then Tween(v, {BackgroundTransparency = 1}, 0.3) end
+   if v:IsA("TextLabel") then T(v, {TextTransparency = 1}, 0.3)
+   elseif v:IsA("ImageLabel") then T(v, {ImageTransparency = 1}, 0.3)
+   elseif v:IsA("Frame") then T(v, {BackgroundTransparency = 1}, 0.3) end
 end
 task.wait(0.5)
 Loader:Destroy()
 
 ----------------------------------------------------------------
--- 2) MENU CUSTOM
+-- 2) MENU CHÍNH
 ----------------------------------------------------------------
-local MenuGui = Instance.new("ScreenGui")
-MenuGui.Name = "ThinhHub_Menu"
-MenuGui.IgnoreGuiInset = false
-MenuGui.DisplayOrder = 100
-MenuGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-MenuGui.Parent = PlayerGui
+local Menu = Instance.new("ScreenGui")
+Menu.Name = "ThinhHub"
+Menu.DisplayOrder = 100
+Menu.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+Menu.Parent = PGui
 
--- Toggle button (luôn hiển thị)
-local ToggleBtn = Instance.new("ImageButton")
-ToggleBtn.Name = "ToggleBtn"
-ToggleBtn.AnchorPoint = Vector2.new(1, 0)
-ToggleBtn.Position = UDim2.new(1, -16, 0, 16)
-ToggleBtn.Size = UDim2.fromOffset(46, 46)
-ToggleBtn.BackgroundColor3 = Color3.fromRGB(70, 130, 255)
-ToggleBtn.Image = "rbxassetid://3926305904"  -- icon nút tròn
-ToggleBtn.ImageRectOffset = Vector2.new(764, 244)
-ToggleBtn.ImageRectSize = Vector2.new(36, 36)
-ToggleBtn.ImageColor3 = Color3.fromRGB(255, 255, 255)
-ToggleBtn.Parent = MenuGui
-Corner(ToggleBtn, 99)
-Stroke(ToggleBtn, Color3.fromRGB(255, 255, 255), 2)
+-- Toggle button (góc phải)
+local Tog = Instance.new("ImageButton")
+Tog.AnchorPoint = Vector2.new(1, 0)
+Tog.Position = UDim2.new(1, -16, 0, 16)
+Tog.Size = UDim2.fromOffset(48, 48)
+Tog.BackgroundColor3 = Color3.fromRGB(70, 130, 255)
+Tog.Image = "rbxassetid://3926305904"
+Tog.ImageRectOffset = Vector2.new(764, 244)
+Tog.ImageRectSize = Vector2.new(36, 36)
+Tog.ImageColor3 = Color3.fromRGB(255, 255, 255)
+Tog.Parent = Menu
+Corner(Tog, 99)
+Stroke(Tog, Color3.fromRGB(255, 255, 255), 2)
 
--- Khung menu chính
+-- Main frame
 local Main = Instance.new("Frame")
-Main.Name = "Main"
 Main.AnchorPoint = Vector2.new(0.5, 0.5)
 Main.Position = UDim2.fromScale(0.5, 0.5)
-Main.Size = IsMobile
-   and UDim2.new(0, 360, 0, 480)
-   or  UDim2.new(0, 520, 0, 420)
+Main.Size = IsMobile and UDim2.new(0, 380, 0, 520) or UDim2.new(0, 580, 0, 440)
 Main.BackgroundColor3 = Color3.fromRGB(18, 20, 32)
 Main.BorderSizePixel = 0
-Main.Visible = true
-Main.Parent = MenuGui
+Main.Visible = false
+Main.Parent = Menu
 Corner(Main, 12)
 Stroke(Main, Color3.fromRGB(70, 130, 255), 2)
 
--- Header (kéo thả)
-local Header = Instance.new("Frame")
-Header.Name = "Header"
-Header.Size = UDim2.new(1, 0, 0, 44)
-Header.BackgroundColor3 = Color3.fromRGB(28, 32, 50)
-Header.BorderSizePixel = 0
-Header.Parent = Main
-Corner(Header, 12)
+-- Header (drag)
+local Head = Instance.new("Frame")
+Head.Size = UDim2.new(1, 0, 0, 46)
+Head.BackgroundColor3 = Color3.fromRGB(28, 32, 50)
+Head.BorderSizePixel = 0
+Head.Parent = Main
+Corner(Head, 12)
+local HFix = Instance.new("Frame")
+HFix.Size = UDim2.new(1, 0, 0, 14)
+HFix.Position = UDim2.new(0, 0, 1, -14)
+HFix.BackgroundColor3 = Color3.fromRGB(28, 32, 50)
+HFix.BorderSizePixel = 0
+HFix.Parent = Head
 
--- Che góc dưới của header cho vuông
-local HeaderFix = Instance.new("Frame")
-HeaderFix.Size = UDim2.new(1, 0, 0, 12)
-HeaderFix.Position = UDim2.new(0, 0, 1, -12)
-HeaderFix.BackgroundColor3 = Color3.fromRGB(28, 32, 50)
-HeaderFix.BorderSizePixel = 0
-HeaderFix.Parent = Header
+local HTitle = Instance.new("TextLabel")
+HTitle.Size = UDim2.new(1, -100, 0, 24)
+HTitle.Position = UDim2.new(0, 16, 0, 4)
+HTitle.BackgroundTransparency = 1
+HTitle.Font = Enum.Font.GothamBold
+HTitle.Text = "⚡ Thinh Hub V1"
+HTitle.TextSize = 16
+HTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+HTitle.TextXAlignment = Enum.TextXAlignment.Left
+HTitle.Parent = Head
 
-local HeaderTitle = Instance.new("TextLabel")
-HeaderTitle.Size = UDim2.new(1, -100, 1, 0)
-HeaderTitle.Position = UDim2.new(0, 16, 0, 0)
-HeaderTitle.BackgroundTransparency = 1
-HeaderTitle.Font = Enum.Font.GothamBold
-HeaderTitle.Text = "⚡ Thinh Hub V6"
-HeaderTitle.TextSize = 16
-HeaderTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
-HeaderTitle.TextXAlignment = Enum.TextXAlignment.Left
-HeaderTitle.Parent = Header
+local HSub = Instance.new("TextLabel")
+HSub.Size = UDim2.new(1, -100, 0, 14)
+HSub.Position = UDim2.new(0, 16, 0, 28)
+HSub.BackgroundTransparency = 1
+HSub.Font = Enum.Font.Gotham
+HSub.Text = "@" .. LP.Name .. " • " .. (IsMobile and "📱 Mobile" or "💻 PC")
+HSub.TextSize = 11
+HSub.TextColor3 = Color3.fromRGB(150, 170, 200)
+HSub.TextXAlignment = Enum.TextXAlignment.Left
+HSub.Parent = Head
 
-local SubInfo = Instance.new("TextLabel")
-SubInfo.Size = UDim2.new(1, -100, 0, 14)
-SubInfo.Position = UDim2.new(0, 16, 0, 26)
-SubInfo.BackgroundTransparency = 1
-SubInfo.Font = Enum.Font.Gotham
-SubInfo.Text = "@" .. LocalPlayer.Name .. " • " .. (IsMobile and "Mobile" or "PC")
-SubInfo.TextSize = 11
-SubInfo.TextColor3 = Color3.fromRGB(150, 170, 200)
-SubInfo.TextXAlignment = Enum.TextXAlignment.Left
-SubInfo.Parent = Header
-
--- Close button
 local CloseBtn = Instance.new("TextButton")
 CloseBtn.AnchorPoint = Vector2.new(1, 0.5)
 CloseBtn.Position = UDim2.new(1, -10, 0.5, 0)
@@ -357,63 +314,57 @@ CloseBtn.Text = "X"
 CloseBtn.TextSize = 14
 CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 CloseBtn.BorderSizePixel = 0
-CloseBtn.Parent = Header
+CloseBtn.Parent = Head
 Corner(CloseBtn, 6)
 
-----------------------------------------------------------------
--- KÉO THẢ MENU
-----------------------------------------------------------------
+-- Drag header
 do
-   local dragging, dragStart, startPos
-   Header.InputBegan:Connect(function(input)
-      if input.UserInputType == Enum.UserInputType.MouseButton1
-         or input.UserInputType == Enum.UserInputType.Touch then
-         dragging = true
-         dragStart = input.Position
-         startPos = Main.Position
+   local dragging, ds, sp
+   Head.InputBegan:Connect(function(i)
+      if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+         dragging = true; ds = i.Position; sp = Main.Position
       end
    end)
-   Header.InputEnded:Connect(function(input)
-      if input.UserInputType == Enum.UserInputType.MouseButton1
-         or input.UserInputType == Enum.UserInputType.Touch then
+   Head.InputEnded:Connect(function(i)
+      if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
          dragging = false
       end
    end)
-   UserInputService.InputChanged:Connect(function(input)
-      if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement
-         or input.UserInputType == Enum.UserInputType.Touch) then
-         local delta = input.Position - dragStart
-         Main.Position = UDim2.new(
-            startPos.X.Scale, startPos.X.Offset + delta.X,
-            startPos.Y.Scale, startPos.Y.Offset + delta.Y
-         )
+   UIS.InputChanged:Connect(function(i)
+      if dragging and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then
+         local d = i.Position - ds
+         Main.Position = UDim2.new(sp.X.Scale, sp.X.Offset + d.X, sp.Y.Scale, sp.Y.Offset + d.Y)
       end
    end)
 end
 
--- Toggle đóng/mở
-local menuOpen = true
-local function toggleMenu()
-   menuOpen = not menuOpen
-   if menuOpen then
-      Main.Visible = true
-      Main.BackgroundTransparency = 1
-      Tween(Main, {BackgroundTransparency = 0}, 0.25)
-   else
-      Tween(Main, {BackgroundTransparency = 1}, 0.2)
-      task.wait(0.2)
-      Main.Visible = false
-   end
+-- Drag toggle
+do
+   local dragging, ds, sp
+   Tog.InputBegan:Connect(function(i)
+      if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+         dragging = true; ds = i.Position; sp = Tog.Position
+      end
+   end)
+   Tog.InputEnded:Connect(function(i)
+      if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+         dragging = false
+      end
+   end)
+   UIS.InputChanged:Connect(function(i)
+      if dragging and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then
+         local d = i.Position - ds
+         Tog.Position = UDim2.new(sp.X.Scale, sp.X.Offset + d.X, sp.Y.Scale, sp.Y.Offset + d.Y)
+      end
+   end)
 end
-CloseBtn.MouseButton1Click:Connect(toggleMenu)
-ToggleBtn.MouseButton1Click:Connect(toggleMenu)
 
 ----------------------------------------------------------------
--- SIDEBAR (tab buttons)
+-- SIDEBAR + CONTENT
 ----------------------------------------------------------------
 local Sidebar = Instance.new("ScrollingFrame")
-Sidebar.Size = UDim2.new(0, 110, 1, -58)
-Sidebar.Position = UDim2.new(0, 8, 0, 50)
+Sidebar.Size = UDim2.new(0, 110, 1, -60)
+Sidebar.Position = UDim2.new(0, 8, 0, 52)
 Sidebar.BackgroundColor3 = Color3.fromRGB(22, 25, 40)
 Sidebar.BorderSizePixel = 0
 Sidebar.ScrollBarThickness = 0
@@ -421,45 +372,38 @@ Sidebar.CanvasSize = UDim2.new(0, 0, 0, 0)
 Sidebar.AutomaticCanvasSize = Enum.AutomaticSize.Y
 Sidebar.Parent = Main
 Corner(Sidebar, 8)
-Padding(Sidebar, 8, 6, 8, 6)
+Pad(Sidebar, 8, 6, 8, 6)
+local SList = Instance.new("UIListLayout")
+SList.Padding = UDim.new(0, 4)
+SList.SortOrder = Enum.SortOrder.LayoutOrder
+SList.Parent = Sidebar
 
-local SidebarList = Instance.new("UIListLayout")
-SidebarList.SortOrder = Enum.SortOrder.LayoutOrder
-SidebarList.Padding = UDim.new(0, 4)
-SidebarList.Parent = Sidebar
-
-----------------------------------------------------------------
--- CONTENT FRAME
-----------------------------------------------------------------
 local Content = Instance.new("Frame")
-Content.Name = "Content"
 Content.AnchorPoint = Vector2.new(1, 0)
-Content.Position = UDim2.new(1, -8, 0, 50)
-Content.Size = UDim2.new(1, -130, 1, -58)
+Content.Position = UDim2.new(1, -8, 0, 52)
+Content.Size = UDim2.new(1, -130, 1, -60)
 Content.BackgroundColor3 = Color3.fromRGB(22, 25, 40)
 Content.BorderSizePixel = 0
 Content.Parent = Main
 Corner(Content, 8)
 
-local Pages = {}
-local currentPage
+local Pages, curPage = {}, nil
 
-local function CreatePage(name, icon)
-   -- Nút tab
+local function CreatePage(name, icon, order)
    local tab = Instance.new("TextButton")
-   tab.Size = UDim2.new(1, 0, 0, 34)
+   tab.Size = UDim2.new(1, 0, 0, 32)
    tab.BackgroundColor3 = Color3.fromRGB(35, 40, 60)
    tab.BorderSizePixel = 0
    tab.Font = Enum.Font.GothamMedium
    tab.Text = "  " .. icon .. "  " .. name
-   tab.TextSize = 13
+   tab.TextSize = 12
    tab.TextColor3 = Color3.fromRGB(200, 210, 230)
    tab.TextXAlignment = Enum.TextXAlignment.Left
+   tab.LayoutOrder = order
    tab.Parent = Sidebar
    Corner(tab, 6)
-   Padding(tab, 0, 8, 0, 8)
+   Pad(tab, 0, 8, 0, 8)
 
-   -- Trang nội dung
    local page = Instance.new("ScrollingFrame")
    page.Size = UDim2.new(1, 0, 1, 0)
    page.BackgroundTransparency = 1
@@ -470,25 +414,24 @@ local function CreatePage(name, icon)
    page.AutomaticCanvasSize = Enum.AutomaticSize.Y
    page.Visible = false
    page.Parent = Content
-   Padding(page, 10, 12, 10, 12)
-
+   Pad(page, 10, 10, 10, 10)
    local list = Instance.new("UIListLayout")
    list.Padding = UDim.new(0, 6)
    list.SortOrder = Enum.SortOrder.LayoutOrder
-   list.HorizontalAlignment = Enum.HorizontalAlignment.Left
    list.Parent = page
 
    Pages[name] = {tab = tab, page = page, list = list}
 
    tab.MouseButton1Click:Connect(function()
-      if currentPage then
-         currentPage.page.Visible = false
-         currentPage.tab.BackgroundColor3 = Color3.fromRGB(35, 40, 60)
+      if curPage then
+         curPage.page.Visible = false
+         curPage.tab.BackgroundColor3 = Color3.fromRGB(35, 40, 60)
+         curPage.tab.TextColor3 = Color3.fromRGB(200, 210, 230)
       end
       page.Visible = true
       tab.BackgroundColor3 = Color3.fromRGB(70, 130, 255)
       tab.TextColor3 = Color3.fromRGB(255, 255, 255)
-      currentPage = Pages[name]
+      curPage = Pages[name]
    end)
 
    return Pages[name]
@@ -497,57 +440,55 @@ end
 ----------------------------------------------------------------
 -- COMPONENTS
 ----------------------------------------------------------------
-local function Section(parent, text)
+local function nextOrder(p)
+   return #p.page:GetChildren() * 10
+end
+
+local function Section(p, text)
    local s = Instance.new("TextLabel")
    s.Size = UDim2.new(1, 0, 0, 18)
    s.BackgroundTransparency = 1
    s.Font = Enum.Font.GothamBold
-   s.Text = "  " .. string.upper(text)
+   s.Text = "  " .. text:upper()
    s.TextSize = 11
    s.TextColor3 = Color3.fromRGB(100, 150, 220)
    s.TextXAlignment = Enum.TextXAlignment.Left
-   s.Parent = parent.page
-   s.LayoutOrder = #parent.page:GetChildren() * 10
+   s.LayoutOrder = nextOrder(p)
+   s.Parent = p.page
    return s
 end
 
-local function Toggle(parent, name, default, callback)
-   local holder = Instance.new("Frame")
-   holder.Size = UDim2.new(1, 0, 0, 36)
-   holder.BackgroundColor3 = Color3.fromRGB(30, 33, 50)
-   holder.BorderSizePixel = 0
-   holder.Parent = parent.page
-   holder.LayoutOrder = #parent.page:GetChildren() * 10
-   Corner(holder, 6)
-
-   local lbl = Instance.new("TextLabel")
-   lbl.Size = UDim2.new(1, -50, 1, 0)
-   lbl.Position = UDim2.new(0, 12, 0, 0)
-   lbl.BackgroundTransparency = 1
-   lbl.Font = Enum.Font.GothamMedium
-   lbl.Text = name
-   lbl.TextSize = 13
-   lbl.TextColor3 = Color3.fromRGB(230, 235, 245)
-   lbl.TextXAlignment = Enum.TextXAlignment.Left
-   lbl.Parent = holder
+local function Toggle(p, name, default, callback)
+   local h = Instance.new("Frame")
+   h.Size = UDim2.new(1, 0, 0, 36)
+   h.BackgroundColor3 = Color3.fromRGB(30, 33, 50)
+   h.BorderSizePixel = 0
+   h.LayoutOrder = nextOrder(p)
+   h.Parent = p.page
+   Corner(h, 6)
+   local l = Instance.new("TextLabel")
+   l.Size = UDim2.new(1, -55, 1, 0)
+   l.Position = UDim2.new(0, 12, 0, 0)
+   l.BackgroundTransparency = 1
+   l.Font = Enum.Font.GothamMedium
+   l.Text = name
+   l.TextSize = 12
+   l.TextColor3 = Color3.fromRGB(230, 235, 245)
+   l.TextXAlignment = Enum.TextXAlignment.Left
+   l.Parent = h
 
    local btn = Instance.new("TextButton")
    btn.AnchorPoint = Vector2.new(1, 0.5)
    btn.Position = UDim2.new(1, -10, 0.5, 0)
    btn.Size = UDim2.fromOffset(40, 22)
-   btn.BackgroundColor3 = default
-      and Color3.fromRGB(70, 200, 120)
-      or  Color3.fromRGB(80, 85, 110)
+   btn.BackgroundColor3 = default and Color3.fromRGB(70, 200, 120) or Color3.fromRGB(80, 85, 110)
    btn.BorderSizePixel = 0
    btn.Text = ""
-   btn.Parent = holder
+   btn.Parent = h
    Corner(btn, 99)
-
    local knob = Instance.new("Frame")
    knob.Size = UDim2.fromOffset(18, 18)
-   knob.Position = default
-      and UDim2.new(1, -20, 0.5, -9)
-      or  UDim2.new(0, 2, 0.5, -9)
+   knob.Position = default and UDim2.new(1, -20, 0.5, -9) or UDim2.new(0, 2, 0.5, -9)
    knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
    knob.BorderSizePixel = 0
    knob.Parent = btn
@@ -556,57 +497,51 @@ local function Toggle(parent, name, default, callback)
    local state = default
    btn.MouseButton1Click:Connect(function()
       state = not state
-      Tween(btn, {BackgroundColor3 = state
-         and Color3.fromRGB(70, 200, 120)
-         or  Color3.fromRGB(80, 85, 110)}, 0.2)
-      Tween(knob, {Position = state
-         and UDim2.new(1, -20, 0.5, -9)
-         or  UDim2.new(0, 2, 0.5, -9)}, 0.2)
+      T(btn, {BackgroundColor3 = state and Color3.fromRGB(70, 200, 120) or Color3.fromRGB(80, 85, 110)}, 0.2)
+      T(knob, {Position = state and UDim2.new(1, -20, 0.5, -9) or UDim2.new(0, 2, 0.5, -9)}, 0.2)
       callback(state)
    end)
    return function() return state end
 end
 
-local function Slider(parent, name, min, max, default, callback)
-   local holder = Instance.new("Frame")
-   holder.Size = UDim2.new(1, 0, 0, 50)
-   holder.BackgroundColor3 = Color3.fromRGB(30, 33, 50)
-   holder.BorderSizePixel = 0
-   holder.Parent = parent.page
-   holder.LayoutOrder = #parent.page:GetChildren() * 10
-   Corner(holder, 6)
+local function Slider(p, name, min, max, default, callback)
+   local h = Instance.new("Frame")
+   h.Size = UDim2.new(1, 0, 0, 50)
+   h.BackgroundColor3 = Color3.fromRGB(30, 33, 50)
+   h.BorderSizePixel = 0
+   h.LayoutOrder = nextOrder(p)
+   h.Parent = p.page
+   Corner(h, 6)
+   local l = Instance.new("TextLabel")
+   l.Size = UDim2.new(1, -60, 0, 22)
+   l.Position = UDim2.new(0, 12, 0, 4)
+   l.BackgroundTransparency = 1
+   l.Font = Enum.Font.GothamMedium
+   l.Text = name
+   l.TextSize = 12
+   l.TextColor3 = Color3.fromRGB(230, 235, 245)
+   l.TextXAlignment = Enum.TextXAlignment.Left
+   l.Parent = h
 
-   local lbl = Instance.new("TextLabel")
-   lbl.Size = UDim2.new(1, -60, 0, 22)
-   lbl.Position = UDim2.new(0, 12, 0, 4)
-   lbl.BackgroundTransparency = 1
-   lbl.Font = Enum.Font.GothamMedium
-   lbl.Text = name
-   lbl.TextSize = 12
-   lbl.TextColor3 = Color3.fromRGB(230, 235, 245)
-   lbl.TextXAlignment = Enum.TextXAlignment.Left
-   lbl.Parent = holder
-
-   local valLbl = Instance.new("TextLabel")
-   valLbl.AnchorPoint = Vector2.new(1, 0)
-   valLbl.Position = UDim2.new(1, -10, 0, 6)
-   valLbl.Size = UDim2.fromOffset(50, 18)
-   valLbl.BackgroundTransparency = 1
-   valLbl.Font = Enum.Font.GothamBold
-   valLbl.Text = tostring(default)
-   valLbl.TextSize = 12
-   valLbl.TextColor3 = Color3.fromRGB(120, 180, 255)
-   valLbl.TextXAlignment = Enum.TextXAlignment.Right
-   valLbl.Parent = holder
+   local v = Instance.new("TextLabel")
+   v.AnchorPoint = Vector2.new(1, 0)
+   v.Position = UDim2.new(1, -10, 0, 6)
+   v.Size = UDim2.fromOffset(50, 18)
+   v.BackgroundTransparency = 1
+   v.Font = Enum.Font.GothamBold
+   v.Text = tostring(default)
+   v.TextSize = 12
+   v.TextColor3 = Color3.fromRGB(120, 180, 255)
+   v.TextXAlignment = Enum.TextXAlignment.Right
+   v.Parent = h
 
    local track = Instance.new("Frame")
    track.Size = UDim2.new(1, -24, 0, 6)
    track.Position = UDim2.new(0, 12, 0, 34)
    track.BackgroundColor3 = Color3.fromRGB(50, 55, 80)
    track.BorderSizePixel = 0
-   track.Parent = holder
+   track.Parent = h
    Corner(track, 99)
-
    local fill = Instance.new("Frame")
    fill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
    fill.BackgroundColor3 = Color3.fromRGB(70, 130, 255)
@@ -614,95 +549,122 @@ local function Slider(parent, name, min, max, default, callback)
    fill.Parent = track
    Corner(fill, 99)
 
-   local function update(input)
-      local absPos = track.AbsolutePosition.X
-      local absSize = track.AbsoluteSize.X
-      local relX = math.clamp((input.Position.X - absPos) / absSize, 0, 1)
-      fill.Size = UDim2.new(relX, 0, 1, 0)
-      local v = math.floor(min + (max - min) * relX)
-      valLbl.Text = tostring(v)
-      callback(v)
-   end
-
    local dragging = false
-   track.InputBegan:Connect(function(input)
-      if input.UserInputType == Enum.UserInputType.MouseButton1
-         or input.UserInputType == Enum.UserInputType.Touch then
-         dragging = true
-         update(input)
+   local function update(input)
+      local abs = track.AbsolutePosition.X
+      local sz = track.AbsoluteSize.X
+      local rel = math.clamp((input.Position.X - abs) / sz, 0, 1)
+      fill.Size = UDim2.new(rel, 0, 1, 0)
+      local val = math.floor(min + (max - min) * rel)
+      v.Text = tostring(val)
+      callback(val)
+   end
+   track.InputBegan:Connect(function(i)
+      if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+         dragging = true; update(i)
       end
    end)
-   track.InputEnded:Connect(function(input)
-      if input.UserInputType == Enum.UserInputType.MouseButton1
-         or input.UserInputType == Enum.UserInputType.Touch then
+   track.InputEnded:Connect(function(i)
+      if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
          dragging = false
       end
    end)
-   UserInputService.InputChanged:Connect(function(input)
-      if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement
-         or input.UserInputType == Enum.UserInputType.Touch) then
-         update(input)
+   UIS.InputChanged:Connect(function(i)
+      if dragging and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then
+         update(i)
       end
    end)
-   return function() return tonumber(valLbl.Text) end
 end
 
-local function Button(parent, name, callback)
-   local btn = Instance.new("TextButton")
-   btn.Size = UDim2.new(1, 0, 0, 34)
-   btn.BackgroundColor3 = Color3.fromRGB(70, 130, 255)
-   btn.BorderSizePixel = 0
-   btn.Font = Enum.Font.GothamBold
-   btn.Text = name
-   btn.TextSize = 13
-   btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-   btn.Parent = parent.page
-   btn.LayoutOrder = #parent.page:GetChildren() * 10
-   Corner(btn, 6)
-
-   btn.MouseButton1Click:Connect(function()
-      Tween(btn, {BackgroundColor3 = Color3.fromRGB(40, 80, 180)}, 0.1)
-      task.wait(0.1)
-      Tween(btn, {BackgroundColor3 = Color3.fromRGB(70, 130, 255)}, 0.15)
+local function Button(p, name, callback)
+   local b = Instance.new("TextButton")
+   b.Size = UDim2.new(1, 0, 0, 34)
+   b.BackgroundColor3 = Color3.fromRGB(70, 130, 255)
+   b.BorderSizePixel = 0
+   b.Font = Enum.Font.GothamBold
+   b.Text = name
+   b.TextSize = 13
+   b.TextColor3 = Color3.fromRGB(255, 255, 255)
+   b.LayoutOrder = nextOrder(p)
+   b.Parent = p.page
+   Corner(b, 6)
+   b.MouseButton1Click:Connect(function()
+      T(b, {BackgroundColor3 = Color3.fromRGB(40, 80, 180)}, 0.08)
+      task.wait(0.08)
+      T(b, {BackgroundColor3 = Color3.fromRGB(70, 130, 255)}, 0.15)
       callback()
    end)
-   btn.MouseEnter:Connect(function()
-      Tween(btn, {BackgroundColor3 = Color3.fromRGB(90, 150, 255)}, 0.2)
-   end)
-   btn.MouseLeave:Connect(function()
-      Tween(btn, {BackgroundColor3 = Color3.fromRGB(70, 130, 255)}, 0.2)
-   end)
+   b.MouseEnter:Connect(function() T(b, {BackgroundColor3 = Color3.fromRGB(90, 150, 255)}, 0.15) end)
+   b.MouseLeave:Connect(function() T(b, {BackgroundColor3 = Color3.fromRGB(70, 130, 255)}, 0.15) end)
 end
 
-local function Label(parent, text)
-   local lbl = Instance.new("TextLabel")
-   lbl.Size = UDim2.new(1, 0, 0, 22)
-   lbl.BackgroundTransparency = 1
-   lbl.Font = Enum.Font.Gotham
-   lbl.Text = text
-   lbl.TextSize = 12
-   lbl.TextColor3 = Color3.fromRGB(180, 190, 210)
-   lbl.TextXAlignment = Enum.TextXAlignment.Left
-   lbl.TextWrapped = true
-   lbl.Parent = parent.page
-   lbl.LayoutOrder = #parent.page:GetChildren() * 10
-   return lbl
+local function Input(p, name, placeholder, callback)
+   local h = Instance.new("Frame")
+   h.Size = UDim2.new(1, 0, 0, 56)
+   h.BackgroundColor3 = Color3.fromRGB(30, 33, 50)
+   h.BorderSizePixel = 0
+   h.LayoutOrder = nextOrder(p)
+   h.Parent = p.page
+   Corner(h, 6)
+   local l = Instance.new("TextLabel")
+   l.Size = UDim2.new(1, -24, 0, 20)
+   l.Position = UDim2.new(0, 12, 0, 4)
+   l.BackgroundTransparency = 1
+   l.Font = Enum.Font.GothamMedium
+   l.Text = name
+   l.TextSize = 12
+   l.TextColor3 = Color3.fromRGB(230, 235, 245)
+   l.TextXAlignment = Enum.TextXAlignment.Left
+   l.Parent = h
+   local tb = Instance.new("TextBox")
+   tb.Size = UDim2.new(1, -24, 0, 26)
+   tb.Position = UDim2.new(0, 12, 0, 26)
+   tb.BackgroundColor3 = Color3.fromRGB(20, 22, 35)
+   tb.BorderSizePixel = 0
+   tb.Font = Enum.Font.Gotham
+   tb.PlaceholderText = placeholder or ""
+   tb.Text = ""
+   tb.TextSize = 12
+   tb.TextColor3 = Color3.fromRGB(220, 225, 240)
+   tb.PlaceholderColor3 = Color3.fromRGB(100, 110, 130)
+   tb.ClearTextOnFocus = true
+   tb.Parent = h
+   Corner(tb, 4)
+   tb.FocusLost:Connect(function(enter) if enter then callback(tb.Text) end end)
+end
+
+local function Label(p, text)
+   local l = Instance.new("TextLabel")
+   l.Size = UDim2.new(1, 0, 0, 22)
+   l.BackgroundTransparency = 1
+   l.Font = Enum.Font.Gotham
+   l.Text = text
+   l.TextSize = 12
+   l.TextColor3 = Color3.fromRGB(180, 190, 210)
+   l.TextXAlignment = Enum.TextXAlignment.Left
+   l.TextWrapped = true
+   l.LayoutOrder = nextOrder(p)
+   l.Parent = p.page
+   return l
 end
 
 ----------------------------------------------------------------
 -- TẠO CÁC TAB
 ----------------------------------------------------------------
-local TabCombat = CreatePage("Combat", "⚔")
-local TabDebug  = CreatePage("Debug", "🔧")
-local TabInfo   = CreatePage("Info", "ℹ")
+local TabCombat  = CreatePage("Combat",  "⚔", 1)
+local TabPlayer  = CreatePage("Player",  "🏃", 2)
+local TabTP      = CreatePage("Teleport","📍", 3)
+local TabFarm    = CreatePage("Farm",    "💰", 4)
+local TabMisc    = CreatePage("Misc",    "⚙", 5)
+local TabDebug   = CreatePage("Debug",   "🔧", 6)
+local TabInfo    = CreatePage("Info",    "ℹ", 7)
 
--- Mở tab đầu
-currentPage = TabCombat
+curPage = TabCombat
 TabCombat.tab.BackgroundColor3 = Color3.fromRGB(70, 130, 255)
 TabCombat.page.Visible = true
 
 ----------------------------------------------------------------
--- LOGIC AUTO BLOCK (giữ nguyên)
+-- AUTO BLOCK (FIX BLOCK SỚM)
 ----------------------------------------------------------------
 local AttackAnimIDs = {
    ["95421145178968"]  = true, ["138898960225788"] = true, ["137844586546509"] = true,
@@ -711,22 +673,28 @@ local AttackAnimIDs = {
    ["119619096808750"]  = true, ["104408538049330"]  = true, ["77705898607209"]   = true,
    ["10468665991"]  = true, ["13560306510"]  = true, ["12510170988"]  = true,
    ["12983333733"]  = true, ["12832505612"]  = true, ["10471336737"]  = true,
-   ["17861840167"]  = true
+   ["17861840167"]  = true,
 }
-local IgnoredKeywords = {"walk","run","idle","jump","fall","land","swim","dash","climb","strafe","turn","sprint","emote"}
+
+-- Từ khóa bỏ qua (không phải đòn đánh)
+local SafeKeywords = {"walk","run","idle","jump","fall","land","swim","dash","climb","strafe","turn","sprint","emote","sit","sleep","death","die","hurt","stun","block","defend","parry"}
+
+-- Từ khóa CHẮC CHẮN là đòn đánh
+local AttackKeywords = {"slash","stab","punch","kick","swing","smash","cut","thrust","slice","attack","hit","combo","slam","uppercut","jab","hook","bash","cleave","impale","spin"}
+
 local BlockKeywords = {"block","defend","shield","parry","guard","def","button1","btn1","skill1","action1","combat1","ability1"}
 
 local AutoBlockOn = false
-local DynamicOn   = true
-local LockFacing  = true
-local BlockRange  = 15
-local LastBlock   = 0
-local BlockCount  = 0
+local DynamicOn = true
+local LockFacing = true
+local BlockRange = 15
+local LastBlock = 0
+local BlockCount = 0
 
 local function FindBlockButton()
-   local pg = LocalPlayer:FindFirstChild("PlayerGui")
+   local pg = LP:FindFirstChild("PlayerGui")
    if not pg then return nil end
-   local best, bestScore = nil, 0
+   local best, bestS = nil, 0
    local function score(name)
       local n = name:lower(); local s = 0
       for _, kw in ipairs(BlockKeywords) do
@@ -737,10 +705,10 @@ local function FindBlockButton()
    for _, v in pairs(pg:GetDescendants()) do
       if (v:IsA("ImageButton") or v:IsA("TextButton") or v:IsA("GuiButton")) and v.Visible then
          local s = score(v.Name)
-         if s > bestScore then bestScore = s; best = v end
+         if s > bestS then bestS = s; best = v end
       end
    end
-   return best, bestScore
+   return best, bestS
 end
 
 local CachedBtn, CachedAt = nil, 0
@@ -763,15 +731,13 @@ local function PerformBlock()
          local btn = GetBlockButton()
          if btn then
             pcall(function()
-               for _, sigName in ipairs({"MouseButton1Click","MouseButton1Down","Activated","TouchTap"}) do
-                  local sig = btn[sigName]
-                  if sig then
-                     for _, c in ipairs(getconnections(sig)) do pcall(function() c:Fire() end) end
-                  end
+               for _, sn in ipairs({"MouseButton1Click","MouseButton1Down","Activated","TouchTap"}) do
+                  local sig = btn[sn]
+                  if sig then for _, c in ipairs(getconnections(sig)) do pcall(function() c:Fire() end) end end
                end
             end)
             pcall(function()
-               local ch = LocalPlayer.Character
+               local ch = LP.Character
                if ch then
                   local tool = ch:FindFirstChildWhichIsA("Tool") or ch
                   firetouchinterest(tool, btn, 0)
@@ -784,9 +750,9 @@ local function PerformBlock()
          end
       else
          pcall(function()
-            VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.F, false, game)
+            VIM:SendKeyEvent(true, Enum.KeyCode.F, false, game)
             task.wait(0.05)
-            VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.F, false, game)
+            VIM:SendKeyEvent(false, Enum.KeyCode.F, false, game)
          end)
       end
    end)
@@ -794,7 +760,7 @@ end
 
 local function FaceAttacker(attackerRoot)
    if not LockFacing then return end
-   local ch = LocalPlayer.Character
+   local ch = LP.Character
    if not ch or not ch:FindFirstChild("HumanoidRootPart") then return end
    local my = ch.HumanoidRootPart
    local dir = (attackerRoot.Position - my.Position) * Vector3.new(1,0,1)
@@ -803,27 +769,57 @@ local function FaceAttacker(attackerRoot)
    end
 end
 
+local function isSafeAnim(name)
+   local n = name:lower()
+   for _, w in ipairs(SafeKeywords) do
+      if n:find(w) then return true end
+   end
+   return false
+end
+
+local function isAttackAnim(name)
+   local n = name:lower()
+   for _, w in ipairs(AttackKeywords) do
+      if n:find(w) then return true end
+   end
+   return false
+end
+
 local function MonitorPlayer(p)
-   if p == LocalPlayer then return end
+   if p == LP then return end
    local function onChar(c)
       local h = c:WaitForChild("Humanoid", 10)
       if not h then return end
       h.AnimationPlayed:Connect(function(track)
          if not AutoBlockOn then return end
-         local my = LocalPlayer.Character
+         local my = LP.Character
          if not my or not my:FindFirstChild("HumanoidRootPart") or not c:FindFirstChild("HumanoidRootPart") then return end
-         if (c.HumanoidRootPart.Position - my.HumanoidRootPart.Position).Magnitude > BlockRange then return end
+
+         -- Điều kiện 1: phải ở gần
+         local dist = (c.HumanoidRootPart.Position - my.HumanoidRootPart.Position).Magnitude
+         if dist > BlockRange then return end
+
+         -- Điều kiện 2: phải có HP đầy (chưa bị đánh)
+         local humOther = c:FindFirstChild("Humanoid")
+         if humOther and humOther.Health <= 0 then return end
+
          local id = (track.Animation and track.Animation.AnimationId or ""):match("%d+")
+         local animName = track.Name or ""
+
          local doBlock = false
-         if id and AttackAnimIDs[id] then doBlock = true
-         elseif DynamicOn and id then
-            local n = track.Name:lower()
-            local ign = false
-            for _, w in ipairs(IgnoredKeywords) do
-               if n:find(w) then ign = true; break end
-            end
-            if not ign then doBlock = true end
+
+         -- Nhánh A: ID thuộc danh sách đòn → BLOCK NGAY
+         if id and AttackAnimIDs[id] then
+            doBlock = true
          end
+
+         -- Nhánh B: tên animation có từ khóa đòn tấn công → BLOCK
+         if not doBlock and DynamicOn then
+            if isAttackAnim(animName) then
+               doBlock = true
+            end
+         end
+
          if doBlock then
             FaceAttacker(c.HumanoidRootPart)
             PerformBlock()
@@ -837,7 +833,7 @@ for _, pl in pairs(Players:GetPlayers()) do MonitorPlayer(pl) end
 Players.PlayerAdded:Connect(MonitorPlayer)
 
 ----------------------------------------------------------------
--- COMBAT TAB CONTENT
+-- TAB COMBAT
 ----------------------------------------------------------------
 Section(TabCombat, "Tự động")
 Toggle(TabCombat, "⚡ Auto Block", false, function(v) AutoBlockOn = v end)
@@ -847,7 +843,144 @@ Section(TabCombat, "Tầm đỡ")
 Slider(TabCombat, "Block Range", 8, 25, 15, function(v) BlockRange = v end)
 
 ----------------------------------------------------------------
--- DEBUG TAB CONTENT
+-- TAB PLAYER
+----------------------------------------------------------------
+local ws, jp, flyState = 16, 50, false
+local flyConn
+
+Section(TabPlayer, "Di chuyển")
+Slider(TabPlayer, "WalkSpeed", 16, 250, 16, function(v)
+   ws = v
+   if LP.Character and LP.Character:FindFirstChild("Humanoid") then
+      LP.Character.Humanoid.WalkSpeed = v
+   end
+end)
+Slider(TabPlayer, "JumpPower", 50, 300, 50, function(v)
+   jp = v
+   if LP.Character and LP.Character:FindFirstChild("Humanoid") then
+      LP.Character.Humanoid.JumpPower = v
+      LP.Character.Humanoid.UseJumpPower = true
+   end
+end)
+
+Section(TabPlayer, "Bay")
+Toggle(TabPlayer, "✈️ Fly (E lên / B xuống)", false, function(state)
+   flyState = state
+   if not LP.Character or not LP.Character:FindFirstChild("HumanoidRootPart") then return end
+   local body = LP.Character.HumanoidRootPart
+   if state then
+      local bv = Instance.new("BodyVelocity", body)
+      bv.Name = "FlyBV"; bv.MaxForce = Vector3.new(1e9,1e9,1e9); bv.Velocity = Vector3.zero
+      local bg = Instance.new("BodyGyro", body)
+      bg.Name = "FlyBG"; bg.MaxTorque = Vector3.new(1e9,1e9,1e9); bg.P = 9e4
+      flyConn = RunService.Heartbeat:Connect(function()
+         local dir = Vector3.zero
+         if UIS:IsKeyDown(Enum.KeyCode.W) then dir = dir + body.CFrame.LookVector end
+         if UIS:IsKeyDown(Enum.KeyCode.S) then dir = dir - body.CFrame.LookVector end
+         if UIS:IsKeyDown(Enum.KeyCode.A) then dir = dir - body.CFrame.RightVector end
+         if UIS:IsKeyDown(Enum.KeyCode.D) then dir = dir + body.CFrame.RightVector end
+         if UIS:IsKeyDown(Enum.KeyCode.E) then dir = dir + Vector3.new(0,1,0) end
+         if UIS:IsKeyDown(Enum.KeyCode.B) then dir = dir - Vector3.new(0,1,0) end
+         bv.Velocity = dir * 80
+         bg.CFrame = body.CFrame
+      end)
+   else
+      if flyConn then flyConn:Disconnect() end
+      if body:FindFirstChild("FlyBV") then body.FlyBV:Destroy() end
+      if body:FindFirstChild("FlyBG") then body.FlyBG:Destroy() end
+   end
+end)
+
+Section(TabPlayer, "Khác")
+Button(TabPlayer, "🔄 Respawn", function() LP:LoadCharacter() end)
+
+----------------------------------------------------------------
+-- TAB TELEPORT
+----------------------------------------------------------------
+Section(TabTP, "Dịch chuyển")
+local function tpToPlayer()
+   for _, p in pairs(Players:GetPlayers()) do
+      if p ~= LP and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+         LP.Character:WaitForChild("HumanoidRootPart").CFrame =
+            p.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3)
+         return
+      end
+   end
+end
+Button(TabTP, "👥 TP tới người chơi khác", tpToPlayer)
+Button(TabTP, "⬆️ Lên cao 200 studs", function()
+   if LP.Character and LP.Character:FindFirstChild("HumanoidRootPart") then
+      LP.Character.HumanoidRootPart.CFrame =
+         LP.Character.HumanoidRootPart.CFrame + Vector3.new(0, 200, 0)
+   end
+end)
+Input(TabTP, "TP theo tọa độ", "0, 50, 0", function(text)
+   local x, y, z = text:match("([%-%d%.]+),%s*([%-%d%.]+),%s*([%-%d%.]+)")
+   if x and y and z and LP.Character and LP.Character:FindFirstChild("HumanoidRootPart") then
+      LP.Character.HumanoidRootPart.CFrame = CFrame.new(tonumber(x), tonumber(y), tonumber(z))
+   end
+end)
+
+----------------------------------------------------------------
+-- TAB FARM
+----------------------------------------------------------------
+local autoFarm, autoRebirth = false, false
+Section(TabFarm, "Tự động")
+Toggle(TabFarm, "💰 Auto nhặt Coins", false, function(v) autoFarm = v end)
+Toggle(TabFarm, "♾ Auto Rebirth", false, function(v) autoRebirth = v end)
+
+task.spawn(function()
+   while true do
+      task.wait(0.4)
+      if autoFarm then
+         for _, v in pairs(workspace:GetDescendants()) do
+            if v:IsA("ProximityPrompt") and v.Parent then
+               local ch = LP.Character
+               if ch and ch:FindFirstChild("HumanoidRootPart") then
+                  local root = v.Parent:IsA("BasePart") and v.Parent or v.Parent:FindFirstChildWhichIsA("BasePart")
+                  if root and (root.Position - ch.HumanoidRootPart.Position).Magnitude < 100 then
+                     pcall(function() fireproximityprompt(v) end)
+                  end
+               end
+            end
+         end
+      end
+   end
+end)
+
+----------------------------------------------------------------
+-- TAB MISC
+----------------------------------------------------------------
+Section(TabMisc, "Tiện ích")
+Button(TabMisc, "🛡 Anti-AFK", function()
+   local vu = game:GetService("VirtualUser")
+   LP.Idled:Connect(function()
+      vu:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+      task.wait(1)
+      vu:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+   end)
+   Label(TabMisc, "✅ Anti-AFK đã bật")
+end)
+Button(TabMisc, "🔁 Rejoin Server", function()
+   TeleportService:Teleport(game.PlaceId, LP)
+end)
+Button(TabMisc, "🌍 Server Hop", function()
+   local ok, res = pcall(function()
+      return game:HttpGet("https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/0?sortOrder=Asc&limit=100")
+   end)
+   if ok then
+      local data = HttpService:JSONDecode(res)
+      for _, s in pairs(data.data) do
+         if s.playing < s.maxPlayers and s.id ~= game.JobId then
+            TeleportService:TeleportToPlaceInstance(game.PlaceId, s.id)
+            return
+         end
+      end
+   end
+end)
+
+----------------------------------------------------------------
+-- TAB DEBUG
 ----------------------------------------------------------------
 Section(TabDebug, "Công cụ")
 Button(TabDebug, "🔍 Quét nút Block", function()
@@ -860,35 +993,25 @@ Button(TabDebug, "🔍 Quét nút Block", function()
    end
 end)
 Button(TabDebug, "🧪 Test Block ngay", function()
-   LastBlock = 0
-   PerformBlock()
-   Label(TabDebug, "🧪 Đã test (count: " .. BlockCount .. ")")
+   LastBlock = 0; PerformBlock()
+   Label(TabDebug, "🧪 Test OK (count: " .. BlockCount .. ")")
 end)
 Button(TabDebug, "🧹 Xóa cache", function()
    CachedBtn = nil; CachedAt = 0
-   Label(TabDebug, "🧹 Cache cleared")
-end)
-Section(TabDebug, "Khác")
-Button(TabDebug, "🔄 Respawn", function()
-   LocalPlayer:LoadCharacter()
-end)
-Button(TabDebug, "🚪 Đóng menu", function()
-   toggleMenu()
+   Label(TabDebug, "🧹 Cleared")
 end)
 
 ----------------------------------------------------------------
--- INFO TAB CONTENT
+-- TAB INFO
 ----------------------------------------------------------------
 Section(TabInfo, "Tài khoản")
-Label(TabInfo, "👤 Tên: @" .. LocalPlayer.Name)
-Label(TabInfo, "✨ Hiển thị: " .. LocalPlayer.DisplayName)
-Label(TabInfo, "🆔 UserId: " .. tostring(LocalPlayer.UserId))
-Label(TabInfo, "📅 Account Age: " .. LocalPlayer.AccountAge .. " ngày")
+Label(TabInfo, "👤 Tên: @" .. LP.Name)
+Label(TabInfo, "✨ Hiển thị: " .. LP.DisplayName)
+Label(TabInfo, "🆔 UserId: " .. tostring(LP.UserId))
+Label(TabInfo, "📅 Account Age: " .. LP.AccountAge .. " ngày")
 Section(TabInfo, "Phiên")
 Label(TabInfo, "📱 Platform: " .. (IsMobile and "Mobile" or "PC"))
 Label(TabInfo, "🎮 Game ID: " .. game.PlaceId)
-Label(TabInfo, "⏱ Session: " .. math.floor(workspace.DistributedGameTime) .. "s")
-Section(TabInfo, "Thống kê")
 local countLbl = Label(TabInfo, "🛡 Blocks đã đỡ: 0")
 task.spawn(function()
    while countLbl and countLbl.Parent do
@@ -898,65 +1021,55 @@ task.spawn(function()
 end)
 
 ----------------------------------------------------------------
--- Toggle button drag
+-- TOGGLE OPEN/CLOSE
 ----------------------------------------------------------------
-do
-   local dragging, dragStart, startPos
-   ToggleBtn.InputBegan:Connect(function(input)
-      if input.UserInputType == Enum.UserInputType.MouseButton1
-         or input.UserInputType == Enum.UserInputType.Touch then
-         dragging = true
-         dragStart = input.Position
-         startPos = ToggleBtn.Position
-      end
-   end)
-   ToggleBtn.InputEnded:Connect(function(input)
-      if input.UserInputType == Enum.UserInputType.MouseButton1
-         or input.UserInputType == Enum.UserInputType.Touch then
-         dragging = false
-      end
-   end)
-   UserInputService.InputChanged:Connect(function(input)
-      if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement
-         or input.UserInputType == Enum.UserInputType.Touch) then
-         local delta = input.Position - dragStart
-         ToggleBtn.Position = UDim2.new(
-            startPos.X.Scale, startPos.X.Offset + delta.X,
-            startPos.Y.Scale, startPos.Y.Offset + delta.Y
-         )
-      end
-   end)
+local menuOpen = false
+local function openMenu()
+   menuOpen = true
+   Main.Visible = true
+   Main.BackgroundTransparency = 1
+   T(Main, {BackgroundTransparency = 0}, 0.25)
 end
+local function closeMenu()
+   menuOpen = false
+   T(Main, {BackgroundTransparency = 1}, 0.2)
+   task.wait(0.2)
+   Main.Visible = false
+end
+Tog.MouseButton1Click:Connect(function()
+   if menuOpen then closeMenu() else openMenu() end
+end)
+CloseBtn.MouseButton1Click:Connect(closeMenu)
+
+-- Mở menu ngay sau loading
+openMenu()
 
 ----------------------------------------------------------------
--- THÔNG BÁO
+-- TOAST THÔNG BÁO
 ----------------------------------------------------------------
-task.defer(function()
-   -- Mini notification ở góc dưới
-   local Notif = Instance.new("Frame")
-   Notif.AnchorPoint = Vector2.new(0.5, 1)
-   Notif.Position = UDim2.new(0.5, 0, 1, -20)
-   Notif.Size = UDim2.new(0, 320, 0, 50)
-   Notif.BackgroundColor3 = Color3.fromRGB(30, 60, 50)
-   Notif.BorderSizePixel = 0
-   Notif.BackgroundTransparency = 1
-   Notif.Parent = MenuGui
-   Corner(Notif, 8)
-   Stroke(Notif, Color3.fromRGB(70, 200, 120), 2)
-
-   local NotifTxt = Instance.new("TextLabel")
-   NotifTxt.Size = UDim2.new(1, 0, 1, 0)
-   NotifTxt.BackgroundTransparency = 1
-   NotifTxt.Font = Enum.Font.GothamBold
-   NotifTxt.Text = "✅ Thinh Hub V6 đã sẵn sàng!"
-   NotifTxt.TextSize = 13
-   NotifTxt.TextColor3 = Color3.fromRGB(120, 230, 160)
-   NotifTxt.Parent = Notif
-
-   Tween(Notif, {BackgroundTransparency = 0}, 0.4)
-   task.wait(2.5)
-   Tween(Notif, {BackgroundTransparency = 1}, 0.4)
-   Tween(NotifTxt, {TextTransparency = 1}, 0.4)
+task.spawn(function()
+   local N = Instance.new("Frame")
+   N.AnchorPoint = Vector2.new(0.5, 1)
+   N.Position = UDim2.new(0.5, 0, 1, -20)
+   N.Size = UDim2.new(0, 320, 0, 50)
+   N.BackgroundColor3 = Color3.fromRGB(30, 60, 50)
+   N.BorderSizePixel = 0
+   N.BackgroundTransparency = 1
+   N.Parent = Menu
+   Corner(N, 8)
+   Stroke(N, Color3.fromRGB(70, 200, 120), 2)
+   local NT = Instance.new("TextLabel")
+   NT.Size = UDim2.new(1, 0, 1, 0)
+   NT.BackgroundTransparency = 1
+   NT.Font = Enum.Font.GothamBold
+   NT.Text = "✅ Thinh Hub V1 đã sẵn sàng!"
+   NT.TextSize = 13
+   NT.TextColor3 = Color3.fromRGB(120, 230, 160)
+   NT.Parent = N
+   T(N, {BackgroundTransparency = 0}, 0.4)
+   task.wait(3)
+   T(N, {BackgroundTransparency = 1}, 0.4)
+   T(NT, {TextTransparency = 1}, 0.4)
    task.wait(0.5)
-   Notif:Destroy()
+   N:Destroy()
 end)
