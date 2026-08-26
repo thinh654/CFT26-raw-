@@ -1,8 +1,9 @@
 --[[
-    THINH HUB V1 - KHÔNG UIListLayout, xếp tay 100%
-    - Mỗi page = Frame thường + set Size/Position thủ công
-    - KHÔNG ScrollingFrame trong content
-    - Tính năng chắc chắn hiển thị
+    THINH HUB V1 - MENU NGANG + ID MỚI
+    - Tabs nằm NGANG trên đầu
+    - Content bên dưới
+    - ID đòn đánh đầy đủ M1 + Skill + Hero
+    - Hold F: 0.3s, Cooldown: 0.22s
 ]]
 
 local LP = game.Players.LocalPlayer
@@ -15,23 +16,19 @@ local function C(p, r) local c = Instance.new("UICorner"); c.CornerRadius = UDim
 local function S(p, col, t) local s = Instance.new("UIStroke"); s.Color = col or Color3.fromRGB(70,130,255); s.Thickness = t or 1.5; s.Parent = p end
 
 ----------------------------------------------------------------
--- SCREENGUI + TOGGLE
+-- TOGGLE BUTTON
 ----------------------------------------------------------------
 local Menu = Instance.new("ScreenGui")
 Menu.Name = "ThinhHub"
 Menu.DisplayOrder = 999
-Menu.IgnoreGuiInset = false
-Menu.ResetOnSpawn = false
 Menu.Parent = PG
 
--- Nút toggle (≡) - LUÔN hiển thị
 local Tog = Instance.new("TextButton")
-Tog.Name = "Tog"
-Tog.Size = UDim2.fromOffset(60, 60)
+Tog.Size = UDim2.fromOffset(56, 56)
 Tog.Position = UDim2.new(1, -70, 0, 20)
 Tog.BackgroundColor3 = Color3.fromRGB(70, 130, 255)
 Tog.Text = "≡"
-Tog.TextSize = 32
+Tog.TextSize = 28
 Tog.TextColor3 = Color3.fromRGB(255, 255, 255)
 Tog.Font = Enum.Font.GothamBold
 Tog.BorderSizePixel = 0
@@ -39,10 +36,12 @@ Tog.Parent = Menu
 C(Tog, 99); S(Tog, Color3.fromRGB(255, 255, 255), 2)
 
 ----------------------------------------------------------------
--- MAIN FRAME
+-- MAIN FRAME - MENU NGANG
 ----------------------------------------------------------------
-local W = IsMobile and 360 or 600
-local H = IsMobile and 540 or 460
+local W = IsMobile and 380 or 700
+local H = IsMobile and 480 or 420
+local TAB_H = 40  -- chiều cao thanh tab ngang
+local HEAD_H = 50
 
 local Main = Instance.new("Frame")
 Main.Name = "Main"
@@ -56,10 +55,10 @@ Main.Parent = Menu
 C(Main, 12); S(Main, Color3.fromRGB(70, 130, 255), 2)
 
 ----------------------------------------------------------------
--- HEADER
+-- HEADER (kéo thả)
 ----------------------------------------------------------------
 local Head = Instance.new("Frame")
-Head.Size = UDim2.new(1, 0, 0, 50)
+Head.Size = UDim2.new(1, 0, 0, HEAD_H)
 Head.BackgroundColor3 = Color3.fromRGB(28, 32, 50)
 Head.BorderSizePixel = 0
 Head.Parent = Main
@@ -67,7 +66,7 @@ C(Head, 12)
 local HF = Instance.new("Frame"); HF.Size = UDim2.new(1,0,0,14); HF.Position = UDim2.new(0,0,1,-14); HF.BackgroundColor3 = Color3.fromRGB(28,32,50); HF.BorderSizePixel = 0; HF.Parent = Head
 
 local HT = Instance.new("TextLabel")
-HT.Size = UDim2.new(1, -100, 0, 26)
+HT.Size = UDim2.new(1, -90, 0, 26)
 HT.Position = UDim2.new(0, 16, 0, 4)
 HT.BackgroundTransparency = 1
 HT.Font = Enum.Font.GothamBold
@@ -78,8 +77,8 @@ HT.TextXAlignment = Enum.TextXAlignment.Left
 HT.Parent = Head
 
 local HS = Instance.new("TextLabel")
-HS.Size = UDim2.new(1, -100, 0, 14)
-HS.Position = UDim2.new(0, 16, 0, 30)
+HS.Size = UDim2.new(1, -90, 0, 14)
+HS.Position = UDim2.new(0, 16, 0, 32)
 HS.BackgroundTransparency = 1
 HS.Font = Enum.Font.Gotham
 HS.Text = "@" .. LP.Name .. " | " .. (IsMobile and "Mobile" or "PC")
@@ -123,28 +122,28 @@ do
 end
 
 ----------------------------------------------------------------
--- SIDEBAR
+-- TAB BAR NGANG (xếp tay)
 ----------------------------------------------------------------
-local SideW = IsMobile and 80 or 100
-local Side = Instance.new("Frame")
-Side.Size = UDim2.new(0, SideW, 1, -58)
-Side.Position = UDim2.new(0, 6, 0, 54)
-Side.BackgroundColor3 = Color3.fromRGB(22, 25, 40)
-Side.BorderSizePixel = 0
-Side.ClipsDescendants = true
-Side.Parent = Main
-C(Side, 8)
+local TabBar = Instance.new("Frame")
+TabBar.Name = "TabBar"
+TabBar.Size = UDim2.new(1, -16, 0, TAB_H)
+TabBar.Position = UDim2.new(0, 8, 0, HEAD_H + 6)
+TabBar.BackgroundColor3 = Color3.fromRGB(22, 25, 40)
+TabBar.BorderSizePixel = 0
+TabBar.ClipsDescendants = true
+TabBar.Parent = Main
+C(TabBar, 8)
 
 ----------------------------------------------------------------
--- CONTENT (frame thường, xếp tay)
+-- CONTENT
 ----------------------------------------------------------------
-local ContentX = SideW + 14
-local ContentW = W - ContentX - 8
-local ContentH = H - 60
+local ContentY = HEAD_H + TAB_H + 14
+local ContentH = H - ContentY - 8
 
 local Content = Instance.new("Frame")
-Content.Size = UDim2.fromOffset(ContentW, ContentH)
-Content.Position = UDim2.new(0, ContentX, 0, 54)
+Content.Name = "Content"
+Content.Size = UDim2.new(1, -16, 0, ContentH)
+Content.Position = UDim2.new(0, 8, 0, ContentY)
 Content.BackgroundColor3 = Color3.fromRGB(22, 25, 40)
 Content.BorderSizePixel = 0
 Content.ClipsDescendants = true
@@ -152,38 +151,47 @@ Content.Parent = Main
 C(Content, 8)
 
 ----------------------------------------------------------------
--- PAGES - mỗi page = 1 Frame
+-- PAGES - xếp tay các tab ngang
 ----------------------------------------------------------------
 local Pages = {}
-local curPage
+local tabNames = {
+   {n = "Combat",   i = "⚔"},
+   {n = "Player",   i = "🏃"},
+   {n = "TP",       i = "📍"},
+   {n = "Farm",     i = "💰"},
+   {n = "Misc",     i = "⚙"},
+   {n = "Debug",    i = "🔧"},
+   {n = "Info",     i = "ℹ"},
+}
 
-local function CreatePage(name, icon, order)
-   -- Tab button (xếp tay trong sidebar)
-   local tabH = 44
-   local tabY = 8 + (order - 1) * (tabH + 4)
+local tabW = 80
+local tabGap = 4
+local totalTabW = #tabNames * tabW + (#tabNames - 1) * tabGap
+local startX = (W - 16 - totalTabW) / 2
+
+for idx, info in ipairs(tabNames) do
+   local x = startX + (idx - 1) * (tabW + tabGap)
    local tab = Instance.new("TextButton")
-   tab.Name = "T_" .. name
-   tab.Size = UDim2.new(1, -8, 0, tabH)
-   tab.Position = UDim2.new(0, 4, 0, tabY)
+   tab.Name = "T_" .. info.n
+   tab.Size = UDim2.fromOffset(tabW, TAB_H - 8)
+   tab.Position = UDim2.new(0, x, 0, 4)
    tab.BackgroundColor3 = Color3.fromRGB(35, 40, 60)
    tab.BorderSizePixel = 0
    tab.Font = Enum.Font.GothamMedium
-   tab.Text = icon .. "\n" .. name
-   tab.TextSize = 10
+   tab.Text = info.i .. " " .. info.n
+   tab.TextSize = 11
    tab.TextColor3 = Color3.fromRGB(200, 210, 230)
-   tab.Parent = Side
+   tab.Parent = TabBar
    C(tab, 6)
 
-   -- Page frame
    local page = Instance.new("Frame")
-   page.Name = "P_" .. name
+   page.Name = "P_" .. info.n
    page.Size = UDim2.new(1, 0, 1, 0)
    page.BackgroundTransparency = 1
    page.Visible = false
    page.Parent = Content
-   C(page, 6)  -- cũng thêm corner cho page
 
-   Pages[name] = {tab = tab, page = page}
+   Pages[info.n] = {tab = tab, page = page}
 
    tab.MouseButton1Click:Connect(function()
       for _, pg in pairs(Pages) do
@@ -194,14 +202,11 @@ local function CreatePage(name, icon, order)
       page.Visible = true
       tab.BackgroundColor3 = Color3.fromRGB(70, 130, 255)
       tab.TextColor3 = Color3.fromRGB(255, 255, 255)
-      curPage = Pages[name]
    end)
-
-   return Pages[name]
 end
 
 ----------------------------------------------------------------
--- COMPONENTS - xếp tay bằng Y tăng dần
+-- COMPONENTS
 ----------------------------------------------------------------
 local function Section(p, txt)
    local l = Instance.new("TextLabel")
@@ -218,7 +223,7 @@ end
 
 local function Toggle(p, name, default, callback)
    local h = Instance.new("Frame")
-   h.Size = UDim2.new(1, -16, 0, 36)
+   h.Size = UDim2.new(1, -16, 0, 32)
    h.BackgroundColor3 = Color3.fromRGB(30, 33, 50)
    h.BorderSizePixel = 0
    h.Parent = p.page
@@ -265,14 +270,14 @@ end
 
 local function Slider(p, name, min, max, default, callback)
    local h = Instance.new("Frame")
-   h.Size = UDim2.new(1, -16, 0, 50)
+   h.Size = UDim2.new(1, -16, 0, 46)
    h.BackgroundColor3 = Color3.fromRGB(30, 33, 50)
    h.BorderSizePixel = 0
    h.Parent = p.page
    C(h, 6)
 
    local l = Instance.new("TextLabel")
-   l.Size = UDim2.new(1, -60, 0, 20)
+   l.Size = UDim2.new(1, -60, 0, 18)
    l.Position = UDim2.new(0, 10, 0, 4)
    l.BackgroundTransparency = 1
    l.Font = Enum.Font.GothamMedium
@@ -285,7 +290,7 @@ local function Slider(p, name, min, max, default, callback)
    local v = Instance.new("TextLabel")
    v.AnchorPoint = Vector2.new(1, 0)
    v.Position = UDim2.new(1, -10, 0, 6)
-   v.Size = UDim2.fromOffset(50, 18)
+   v.Size = UDim2.fromOffset(50, 16)
    v.BackgroundTransparency = 1
    v.Font = Enum.Font.GothamBold
    v.Text = tostring(default)
@@ -296,7 +301,7 @@ local function Slider(p, name, min, max, default, callback)
 
    local track = Instance.new("Frame")
    track.Size = UDim2.new(1, -20, 0, 6)
-   track.Position = UDim2.new(0, 10, 0, 34)
+   track.Position = UDim2.new(0, 10, 0, 30)
    track.BackgroundColor3 = Color3.fromRGB(50, 55, 80)
    track.BorderSizePixel = 0
    track.Parent = h
@@ -338,7 +343,7 @@ end
 
 local function Btn(p, name, callback)
    local b = Instance.new("TextButton")
-   b.Size = UDim2.new(1, -16, 0, 36)
+   b.Size = UDim2.new(1, -16, 0, 32)
    b.BackgroundColor3 = Color3.fromRGB(70, 130, 255)
    b.BorderSizePixel = 0
    b.Font = Enum.Font.GothamBold
@@ -352,7 +357,7 @@ end
 
 local function Lbl(p, text)
    local l = Instance.new("TextLabel")
-   l.Size = UDim2.new(1, -16, 0, 20)
+   l.Size = UDim2.new(1, -16, 0, 18)
    l.BackgroundTransparency = 1
    l.Font = Enum.Font.Gotham
    l.Text = text
@@ -364,7 +369,7 @@ local function Lbl(p, text)
    return l
 end
 
--- Hàm xếp tay - đặt vị trí Y tăng dần cho mỗi page
+-- Xếp tay vị trí Y cho mỗi page
 local function layoutPage(p)
    local y = 8
    for _, child in pairs(p.page:GetChildren()) do
@@ -376,37 +381,38 @@ local function layoutPage(p)
 end
 
 ----------------------------------------------------------------
--- TẠO CÁC TAB
-----------------------------------------------------------------
-local TabC = CreatePage("Combat", "⚔", 1)
-local TabP = CreatePage("Player", "🏃", 2)
-local TabT = CreatePage("TP", "📍", 3)
-local TabF = CreatePage("Farm", "💰", 4)
-local TabM = CreatePage("Misc", "⚙", 5)
-local TabD = CreatePage("Debug","🔧", 6)
-local TabI = CreatePage("Info", "ℹ", 7)
-
-TabC.tab.BackgroundColor3 = Color3.fromRGB(70, 130, 255)
-TabC.tab.TextColor3 = Color3.fromRGB(255, 255, 255)
-TabC.page.Visible = true
-curPage = TabC
-
-----------------------------------------------------------------
--- AUTO BLOCK
+-- AUTO BLOCK (ID mới + Hold 0.3s + Cooldown 0.22s)
 ----------------------------------------------------------------
 local AttackAnimIDs = {
-   ["95421145178968"]=true,["138898960225788"]=true,["137844586546509"]=true,
-   ["120133391090244"]=true,["96489184596023"]=true,["13826705245289"]=true,
-   ["140491244934559"]=true,["1012839390868172"]=true,["139479927693015"]=true,
-   ["119619096808750"]=true,["104408538049330"]=true,["77705898607209"]=true,
-   ["10468665991"]=true,["13560306510"]=true,["12510170988"]=true,
-   ["12983333733"]=true,["12832505612"]=true,["10471336737"]=true,["17861840167"]=true,
+   -- Đòn đấm thường / M1 cơ bản
+   ["10468665991"] = true, -- Normal Punch
+   ["10469493270"] = true, -- M1 chuỗi 1
+   ["10469630950"] = true, -- M1 chuỗi 2
+   ["10469639222"] = true, -- M1 chuỗi 3
+   ["10469643643"] = true, -- M1 chuỗi 4
+   -- Garou
+   ["13532562418"] = true, -- Garou M1 1
+   ["13532600125"] = true, -- Garou M1 2
+   ["12273188754"] = true, -- Flowing Water
+   -- Skill mạnh
+   ["13560306510"] = true, -- Barrage
+   ["12510170988"] = true, -- Uppercut
+   ["10471336737"] = true, -- Shove
+   ["12832505612"] = true, -- Dropkick
+   ["12983333733"] = true, -- Serious Punch
+   ["13073745835"] = true, -- Repulse
+   ["17861840167"] = true, -- Fuga
 }
+
 local AtkK = {"slash","stab","punch","kick","swing","smash","cut","thrust","slice","attack","hit","combo","slam","uppercut","jab","hook","bash","cleave","impale","spin"}
 local BlockK = {"block","defend","shield","parry","guard","def","button1","btn1","skill1","action1","combat1","ability1"}
 
 local AutoBlockOn, DynamicOn, LockFacing = false, true, true
-local BlockRange, LastBlock, BlockCount = 15, 0, 0
+local BlockRange = 15
+local LastBlock = 0
+local BlockCount = 0
+local HoldTime = 0.30  -- GIỮ F trong 0.3s
+local CooldownTime = 0.22  -- NGHỈ 0.22s giữa 2 lần block
 
 local function FindBlockBtn()
    local pg = LP:FindFirstChild("PlayerGui")
@@ -434,7 +440,7 @@ local function GetBlockBtn()
 end
 
 local function PerformBlock()
-   if tick() - LastBlock < 0.30 then return end
+   if tick() - LastBlock < CooldownTime then return end
    LastBlock = tick()
    BlockCount = BlockCount + 1
    task.spawn(function()
@@ -460,9 +466,10 @@ local function PerformBlock()
             CachedBtn = nil
          end
       else
+         -- PC: BẤM F → GIỮ HoldTime → NHẢ F (chính xác hơn)
          pcall(function()
             VIM:SendKeyEvent(true, Enum.KeyCode.F, false, game)
-            task.wait(0.05)
+            task.wait(HoldTime)
             VIM:SendKeyEvent(false, Enum.KeyCode.F, false, game)
          end)
       end
@@ -509,28 +516,39 @@ game.Players.PlayerAdded:Connect(MonitorP)
 ----------------------------------------------------------------
 -- NỘI DUNG TỪNG TAB
 ----------------------------------------------------------------
-Section(TabC, "Tự động")
-Toggle(TabC, "⚡ Auto Block", false, function(v) AutoBlockOn = v end)
-Toggle(TabC, "🧠 Smart Detection", true, function(v) DynamicOn = v end)
-Toggle(TabC, "🔒 Lock Facing", true, function(v) LockFacing = v end)
-Section(TabC, "Tầm đỡ")
-Slider(TabC, "Block Range", 8, 25, 15, function(v) BlockRange = v end)
+local TC = Pages["Combat"]
+local TP = Pages["Player"]
+local TT = Pages["TP"]
+local TF = Pages["Farm"]
+local TM = Pages["Misc"]
+local TD = Pages["Debug"]
+local TI = Pages["Info"]
 
-Section(TabP, "Di chuyển")
-Slider(TabP, "WalkSpeed", 16, 250, 16, function(v)
+-- COMBAT
+Section(TC, "Tự động")
+Toggle(TC, "⚡ Auto Block", false, function(v) AutoBlockOn = v end)
+Toggle(TC, "🧠 Smart Detection", true, function(v) DynamicOn = v end)
+Toggle(TC, "🔒 Lock Facing", true, function(v) LockFacing = v end)
+Section(TC, "Tầm đỡ")
+Slider(TC, "Block Range", 8, 25, 15, function(v) BlockRange = v end)
+
+-- PLAYER
+Section(TP, "Di chuyển")
+Slider(TP, "WalkSpeed", 16, 250, 16, function(v)
    if LP.Character and LP.Character:FindFirstChild("Humanoid") then LP.Character.Humanoid.WalkSpeed = v end
 end)
-Slider(TabP, "JumpPower", 50, 300, 50, function(v)
+Slider(TP, "JumpPower", 50, 300, 50, function(v)
    if LP.Character and LP.Character:FindFirstChild("Humanoid") then
       LP.Character.Humanoid.UseJumpPower = true
       LP.Character.Humanoid.JumpPower = v
    end
 end)
-Section(TabP, "Khác")
-Btn(TabP, "🔄 Respawn", function() LP:LoadCharacter() end)
+Section(TP, "Khác")
+Btn(TP, "🔄 Respawn", function() LP:LoadCharacter() end)
 
-Section(TabT, "Dịch chuyển")
-Btn(TabT, "👥 TP tới người chơi", function()
+-- TP
+Section(TT, "Dịch chuyển")
+Btn(TT, "👥 TP tới người chơi", function()
    for _, p in pairs(game.Players:GetPlayers()) do
       if p ~= LP and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
          LP.Character:WaitForChild("HumanoidRootPart").CFrame = p.Character.HumanoidRootPart.CFrame * CFrame.new(0,0,3)
@@ -538,18 +556,20 @@ Btn(TabT, "👥 TP tới người chơi", function()
       end
    end
 end)
-Btn(TabT, "⬆️ Lên cao 200", function()
+Btn(TT, "⬆️ Lên cao 200", function()
    if LP.Character and LP.Character:FindFirstChild("HumanoidRootPart") then
       LP.Character.HumanoidRootPart.CFrame = LP.Character.HumanoidRootPart.CFrame + Vector3.new(0,200,0)
    end
 end)
 
-Section(TabF, "Tự động")
+-- FARM
+Section(TF, "Tự động")
 local autoFarm = false
-Toggle(TabF, "💰 Auto Coins", false, function(v) autoFarm = v end)
+Toggle(TF, "💰 Auto Coins", false, function(v) autoFarm = v end)
 
-Section(TabM, "Tiện ích")
-Btn(TabM, "🛡 Anti-AFK", function()
+-- MISC
+Section(TM, "Tiện ích")
+Btn(TM, "🛡 Anti-AFK", function()
    pcall(function()
       local vu = game:GetService("VirtualUser")
       LP.Idled:Connect(function()
@@ -559,27 +579,29 @@ Btn(TabM, "🛡 Anti-AFK", function()
       end)
    end)
 end)
-Btn(TabM, "🔁 Rejoin", function()
+Btn(TM, "🔁 Rejoin", function()
    pcall(function() game:GetService("TeleportService"):Teleport(game.PlaceId, LP) end)
 end)
 
-Section(TabD, "Công cụ")
-Btn(TabD, "🔍 Quét nút Block", function()
+-- DEBUG
+Section(TD, "Công cụ")
+Btn(TD, "🔍 Quét nút Block", function()
    CachedBtn = nil; CachedAt = 0
    local b = GetBlockBtn()
-   Lbl(TabD, b and ("✅ " .. b.Name) or "❌ Không thấy")
+   Lbl(TD, b and ("✅ " .. b.Name) or "❌ Không thấy")
 end)
-Btn(TabD, "🧪 Test Block", function()
-   LastBlock = 0; PerformBlock(); Lbl(TabD, "🧪 count: " .. BlockCount)
+Btn(TD, "🧪 Test Block", function()
+   LastBlock = 0; PerformBlock(); Lbl(TD, "🧪 count: " .. BlockCount)
 end)
 
-Section(TabI, "Tài khoản")
-Lbl(TabI, "👤 @" .. LP.Name)
-Lbl(TabI, "✨ " .. LP.DisplayName)
-Lbl(TabI, "🆔 " .. tostring(LP.UserId))
-Lbl(TabI, "📅 " .. LP.AccountAge .. " ngày")
-Lbl(TabI, "📱 " .. (IsMobile and "Mobile" or "PC"))
-local countLbl = Lbl(TabI, "🛡 Blocks: 0")
+-- INFO
+Section(TI, "Tài khoản")
+Lbl(TI, "👤 @" .. LP.Name)
+Lbl(TI, "✨ " .. LP.DisplayName)
+Lbl(TI, "🆔 " .. tostring(LP.UserId))
+Lbl(TI, "📅 " .. LP.AccountAge .. " ngày")
+Lbl(TI, "📱 " .. (IsMobile and "Mobile" or "PC"))
+local countLbl = Lbl(TI, "🛡 Blocks: 0")
 task.spawn(function()
    while countLbl and countLbl.Parent do
       pcall(function() countLbl.Text = "🛡 Blocks: " .. BlockCount end)
@@ -587,17 +609,20 @@ task.spawn(function()
    end
 end)
 
-----------------------------------------------------------------
--- XẾP LAYOUT CHO TỪNG PAGE
-----------------------------------------------------------------
+-- XẾP LAYOUT
 task.defer(function()
    for _, pg in pairs(Pages) do
       layoutPage(pg)
    end
 end)
 
+-- Mở tab Combat đầu tiên
+TC.tab.BackgroundColor3 = Color3.fromRGB(70, 130, 255)
+TC.tab.TextColor3 = Color3.fromRGB(255, 255, 255)
+TC.page.Visible = true
+
 ----------------------------------------------------------------
--- TOGGLE ĐÓNG/MỞ
+-- TOGGLE
 ----------------------------------------------------------------
 Tog.MouseButton1Click:Connect(function()
    Main.Visible = not Main.Visible
