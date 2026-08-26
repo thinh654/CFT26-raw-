@@ -1,41 +1,37 @@
 --[[
-    THINH HUB V1 - SIÊU GỌN (TEST MODE)
-    - Không load ảnh (tránh crash)
-    - Không Background blur
-    - Mỗi thứ 1 frame riêng, KHÔNG ScrollingFrame
-    - 7 tab đơn giản, chắc chắn hoạt động
+    THINH HUB V1 - KHÔNG UIListLayout, xếp tay 100%
+    - Mỗi page = Frame thường + set Size/Position thủ công
+    - KHÔNG ScrollingFrame trong content
+    - Tính năng chắc chắn hiển thị
 ]]
 
 local LP = game.Players.LocalPlayer
 local PG = LP:WaitForChild("PlayerGui")
 local UIS = game:GetService("UserInputService")
+local VIM = game:GetService("VirtualInputManager")
 local IsMobile = UIS.TouchEnabled and not UIS.KeyboardEnabled
 
 local function C(p, r) local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, r or 8); c.Parent = p end
 local function S(p, col, t) local s = Instance.new("UIStroke"); s.Color = col or Color3.fromRGB(70,130,255); s.Thickness = t or 1.5; s.Parent = p end
 
 ----------------------------------------------------------------
--- 1) SCREENGUI
+-- SCREENGUI + TOGGLE
 ----------------------------------------------------------------
 local Menu = Instance.new("ScreenGui")
 Menu.Name = "ThinhHub"
 Menu.DisplayOrder = 999
 Menu.IgnoreGuiInset = false
 Menu.ResetOnSpawn = false
-Menu.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 Menu.Parent = PG
 
-----------------------------------------------------------------
--- 2) NÚT TOGGLE (≡) - luôn hiển thị, dùng để MỞ
-----------------------------------------------------------------
+-- Nút toggle (≡) - LUÔN hiển thị
 local Tog = Instance.new("TextButton")
-Tog.Name = "Toggle"
-Tog.Size = UDim2.fromOffset(56, 56)
+Tog.Name = "Tog"
+Tog.Size = UDim2.fromOffset(60, 60)
 Tog.Position = UDim2.new(1, -70, 0, 20)
-Tog.AnchorPoint = Vector2.new(0, 0)
 Tog.BackgroundColor3 = Color3.fromRGB(70, 130, 255)
 Tog.Text = "≡"
-Tog.TextSize = 28
+Tog.TextSize = 32
 Tog.TextColor3 = Color3.fromRGB(255, 255, 255)
 Tog.Font = Enum.Font.GothamBold
 Tog.BorderSizePixel = 0
@@ -43,24 +39,26 @@ Tog.Parent = Menu
 C(Tog, 99); S(Tog, Color3.fromRGB(255, 255, 255), 2)
 
 ----------------------------------------------------------------
--- 3) MAIN FRAME
+-- MAIN FRAME
 ----------------------------------------------------------------
+local W = IsMobile and 360 or 600
+local H = IsMobile and 540 or 460
+
 local Main = Instance.new("Frame")
 Main.Name = "Main"
-Main.Size = UDim2.fromOffset(IsMobile and 360 or 580, IsMobile and 520 or 440)
+Main.Size = UDim2.fromOffset(W, H)
 Main.Position = UDim2.fromScale(0.5, 0.5)
 Main.AnchorPoint = Vector2.new(0.5, 0.5)
 Main.BackgroundColor3 = Color3.fromRGB(18, 20, 32)
 Main.BorderSizePixel = 0
-Main.Visible = false
+Main.Visible = true
 Main.Parent = Menu
 C(Main, 12); S(Main, Color3.fromRGB(70, 130, 255), 2)
 
 ----------------------------------------------------------------
--- 4) HEADER
+-- HEADER
 ----------------------------------------------------------------
 local Head = Instance.new("Frame")
-Head.Name = "Header"
 Head.Size = UDim2.new(1, 0, 0, 50)
 Head.BackgroundColor3 = Color3.fromRGB(28, 32, 50)
 Head.BorderSizePixel = 0
@@ -69,7 +67,7 @@ C(Head, 12)
 local HF = Instance.new("Frame"); HF.Size = UDim2.new(1,0,0,14); HF.Position = UDim2.new(0,0,1,-14); HF.BackgroundColor3 = Color3.fromRGB(28,32,50); HF.BorderSizePixel = 0; HF.Parent = Head
 
 local HT = Instance.new("TextLabel")
-HT.Size = UDim2.new(1, -90, 0, 28)
+HT.Size = UDim2.new(1, -100, 0, 26)
 HT.Position = UDim2.new(0, 16, 0, 4)
 HT.BackgroundTransparency = 1
 HT.Font = Enum.Font.GothamBold
@@ -80,21 +78,19 @@ HT.TextXAlignment = Enum.TextXAlignment.Left
 HT.Parent = Head
 
 local HS = Instance.new("TextLabel")
-HS.Size = UDim2.new(1, -90, 0, 14)
-HS.Position = UDim2.new(0, 16, 0, 32)
+HS.Size = UDim2.new(1, -100, 0, 14)
+HS.Position = UDim2.new(0, 16, 0, 30)
 HS.BackgroundTransparency = 1
 HS.Font = Enum.Font.Gotham
-HS.Text = "@" .. LP.Name .. " - " .. (IsMobile and "Mobile" or "PC")
+HS.Text = "@" .. LP.Name .. " | " .. (IsMobile and "Mobile" or "PC")
 HS.TextSize = 11
 HS.TextColor3 = Color3.fromRGB(150, 170, 200)
 HS.TextXAlignment = Enum.TextXAlignment.Left
 HS.Parent = Head
 
--- NÚT ĐÓNG (đặt trong header, layer cao nhất)
 local CB = Instance.new("TextButton")
-CB.Name = "CloseBtn"
 CB.Size = UDim2.fromOffset(36, 36)
-CB.Position = UDim2.new(1, -7, 0.5, 0)
+CB.Position = UDim2.new(1, -8, 0.5, 0)
 CB.AnchorPoint = Vector2.new(1, 0.5)
 CB.BackgroundColor3 = Color3.fromRGB(220, 60, 60)
 CB.Font = Enum.Font.GothamBold
@@ -105,77 +101,87 @@ CB.BorderSizePixel = 0
 CB.Parent = Head
 C(CB, 8)
 
+-- Drag
+do
+   local drag, ds, sp
+   Head.InputBegan:Connect(function(i)
+      if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+         drag = true; ds = i.Position; sp = Main.Position
+      end
+   end)
+   Head.InputEnded:Connect(function(i)
+      if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+         drag = false
+      end
+   end)
+   UIS.InputChanged:Connect(function(i)
+      if drag and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then
+         local d = i.Position - ds
+         Main.Position = UDim2.new(sp.X.Scale, sp.X.Offset + d.X, sp.Y.Scale, sp.Y.Offset + d.Y)
+      end
+   end)
+end
+
 ----------------------------------------------------------------
--- 5) SIDEBAR
+-- SIDEBAR
 ----------------------------------------------------------------
-local SideW = IsMobile and 88 or 110
-local Side = Instance.new("ScrollingFrame")
-Side.Name = "Sidebar"
-Side.Size = UDim2.new(0, SideW, 1, -60)
+local SideW = IsMobile and 80 or 100
+local Side = Instance.new("Frame")
+Side.Size = UDim2.new(0, SideW, 1, -58)
 Side.Position = UDim2.new(0, 6, 0, 54)
 Side.BackgroundColor3 = Color3.fromRGB(22, 25, 40)
 Side.BorderSizePixel = 0
-Side.ScrollBarThickness = 0
-Side.ScrollBarImageColor3 = Color3.fromRGB(70, 130, 255)
-Side.CanvasSize = UDim2.new(0, 0, 0, 0)
-Side.AutomaticCanvasSize = Enum.AutomaticSize.Y
+Side.ClipsDescendants = true
 Side.Parent = Main
 C(Side, 8)
-local SList = UIListLayout and Instance.new("UIListLayout", Side) or nil
-SList.Padding = UDim.new(0, 4)
-SList.SortOrder = Enum.SortOrder.LayoutOrder
-SList.HorizontalAlignment = Enum.HorizontalAlignment.Center
-local SPad = Instance.new("UIPadding"); SPad.PaddingTop = UDim.new(0,6); SPad.PaddingLeft = UDim.new(0,4); SPad.PaddingRight = UDim.new(0,4); SPad.Parent = Side
 
 ----------------------------------------------------------------
--- 6) CONTENT
+-- CONTENT (frame thường, xếp tay)
 ----------------------------------------------------------------
+local ContentX = SideW + 14
+local ContentW = W - ContentX - 8
+local ContentH = H - 60
+
 local Content = Instance.new("Frame")
-Content.Name = "Content"
+Content.Size = UDim2.fromOffset(ContentW, ContentH)
+Content.Position = UDim2.new(0, ContentX, 0, 54)
 Content.BackgroundColor3 = Color3.fromRGB(22, 25, 40)
 Content.BorderSizePixel = 0
 Content.ClipsDescendants = true
-Content.Size = UDim2.new(1, -SideW - 18, 1, -60)
-Content.Position = UDim2.new(0, SideW + 12, 0, 54)
 Content.Parent = Main
 C(Content, 8)
 
 ----------------------------------------------------------------
--- 7) PAGE SYSTEM
+-- PAGES - mỗi page = 1 Frame
 ----------------------------------------------------------------
 local Pages = {}
+local curPage
 
 local function CreatePage(name, icon, order)
+   -- Tab button (xếp tay trong sidebar)
+   local tabH = 44
+   local tabY = 8 + (order - 1) * (tabH + 4)
    local tab = Instance.new("TextButton")
    tab.Name = "T_" .. name
-   tab.Size = UDim2.new(1, 0, 0, 42)
+   tab.Size = UDim2.new(1, -8, 0, tabH)
+   tab.Position = UDim2.new(0, 4, 0, tabY)
    tab.BackgroundColor3 = Color3.fromRGB(35, 40, 60)
    tab.BorderSizePixel = 0
    tab.Font = Enum.Font.GothamMedium
    tab.Text = icon .. "\n" .. name
    tab.TextSize = 10
    tab.TextColor3 = Color3.fromRGB(200, 210, 230)
-   tab.LayoutOrder = order
    tab.Parent = Side
    C(tab, 6)
 
-   local page = Instance.new("ScrollingFrame")
+   -- Page frame
+   local page = Instance.new("Frame")
    page.Name = "P_" .. name
    page.Size = UDim2.new(1, 0, 1, 0)
    page.BackgroundTransparency = 1
-   page.BorderSizePixel = 0
-   page.ScrollBarThickness = 3
-   page.ScrollBarImageColor3 = Color3.fromRGB(70, 130, 255)
-   page.CanvasSize = UDim2.new(0, 0, 0, 0)
-   page.AutomaticCanvasSize = Enum.AutomaticSize.Y
    page.Visible = false
    page.Parent = Content
-   local ppad = Instance.new("UIPadding"); ppad.PaddingTop = UDim.new(0,10); ppad.PaddingBottom = UDim.new(0,10); ppad.PaddingLeft = UDim.new(0,10); ppad.PaddingRight = UDim.new(0,10); ppad.Parent = page
-   local list = Instance.new("UIListLayout")
-   list.Padding = UDim.new(0, 6)
-   list.SortOrder = Enum.SortOrder.LayoutOrder
-   list.HorizontalAlignment = Enum.HorizontalAlignment.Center
-   list.Parent = page
+   C(page, 6)  -- cũng thêm corner cho page
 
    Pages[name] = {tab = tab, page = page}
 
@@ -188,35 +194,33 @@ local function CreatePage(name, icon, order)
       page.Visible = true
       tab.BackgroundColor3 = Color3.fromRGB(70, 130, 255)
       tab.TextColor3 = Color3.fromRGB(255, 255, 255)
+      curPage = Pages[name]
    end)
 
    return Pages[name]
 end
 
 ----------------------------------------------------------------
--- 8) COMPONENTS (đơn giản)
+-- COMPONENTS - xếp tay bằng Y tăng dần
 ----------------------------------------------------------------
-local function O(p) return #p.page:GetChildren() * 10 end
-
 local function Section(p, txt)
    local l = Instance.new("TextLabel")
-   l.Size = UDim2.new(1, -10, 0, 18)
+   l.Size = UDim2.new(1, -16, 0, 16)
    l.BackgroundTransparency = 1
    l.Font = Enum.Font.GothamBold
    l.Text = txt:upper()
    l.TextSize = 10
    l.TextColor3 = Color3.fromRGB(100, 150, 220)
    l.TextXAlignment = Enum.TextXAlignment.Left
-   l.LayoutOrder = O(p)
    l.Parent = p.page
+   return l
 end
 
 local function Toggle(p, name, default, callback)
    local h = Instance.new("Frame")
-   h.Size = UDim2.new(1, -10, 0, 36)
+   h.Size = UDim2.new(1, -16, 0, 36)
    h.BackgroundColor3 = Color3.fromRGB(30, 33, 50)
    h.BorderSizePixel = 0
-   h.LayoutOrder = O(p)
    h.Parent = p.page
    C(h, 6)
 
@@ -261,10 +265,9 @@ end
 
 local function Slider(p, name, min, max, default, callback)
    local h = Instance.new("Frame")
-   h.Size = UDim2.new(1, -10, 0, 50)
+   h.Size = UDim2.new(1, -16, 0, 50)
    h.BackgroundColor3 = Color3.fromRGB(30, 33, 50)
    h.BorderSizePixel = 0
-   h.LayoutOrder = O(p)
    h.Parent = p.page
    C(h, 6)
 
@@ -333,24 +336,23 @@ local function Slider(p, name, min, max, default, callback)
    end)
 end
 
-local function Button(p, name, callback)
+local function Btn(p, name, callback)
    local b = Instance.new("TextButton")
-   b.Size = UDim2.new(1, -10, 0, 36)
+   b.Size = UDim2.new(1, -16, 0, 36)
    b.BackgroundColor3 = Color3.fromRGB(70, 130, 255)
    b.BorderSizePixel = 0
    b.Font = Enum.Font.GothamBold
    b.Text = name
    b.TextSize = 12
    b.TextColor3 = Color3.fromRGB(255, 255, 255)
-   b.LayoutOrder = O(p)
    b.Parent = p.page
    C(b, 6)
    b.MouseButton1Click:Connect(callback)
 end
 
-local function Label(p, text)
+local function Lbl(p, text)
    local l = Instance.new("TextLabel")
-   l.Size = UDim2.new(1, -10, 0, 22)
+   l.Size = UDim2.new(1, -16, 0, 20)
    l.BackgroundTransparency = 1
    l.Font = Enum.Font.Gotham
    l.Text = text
@@ -358,12 +360,23 @@ local function Label(p, text)
    l.TextColor3 = Color3.fromRGB(180, 190, 210)
    l.TextXAlignment = Enum.TextXAlignment.Left
    l.TextWrapped = true
-   l.LayoutOrder = O(p)
    l.Parent = p.page
+   return l
+end
+
+-- Hàm xếp tay - đặt vị trí Y tăng dần cho mỗi page
+local function layoutPage(p)
+   local y = 8
+   for _, child in pairs(p.page:GetChildren()) do
+      if child:IsA("Frame") or child:IsA("TextLabel") then
+         child.Position = UDim2.new(0, 8, 0, y)
+         y = y + child.AbsoluteSize.Y + 6
+      end
+   end
 end
 
 ----------------------------------------------------------------
--- 9) TẠO CÁC TAB
+-- TẠO CÁC TAB
 ----------------------------------------------------------------
 local TabC = CreatePage("Combat", "⚔", 1)
 local TabP = CreatePage("Player", "🏃", 2)
@@ -376,9 +389,10 @@ local TabI = CreatePage("Info", "ℹ", 7)
 TabC.tab.BackgroundColor3 = Color3.fromRGB(70, 130, 255)
 TabC.tab.TextColor3 = Color3.fromRGB(255, 255, 255)
 TabC.page.Visible = true
+curPage = TabC
 
 ----------------------------------------------------------------
--- 10) AUTO BLOCK
+-- AUTO BLOCK
 ----------------------------------------------------------------
 local AttackAnimIDs = {
    ["95421145178968"]=true,["138898960225788"]=true,["137844586546509"]=true,
@@ -393,7 +407,6 @@ local BlockK = {"block","defend","shield","parry","guard","def","button1","btn1"
 
 local AutoBlockOn, DynamicOn, LockFacing = false, true, true
 local BlockRange, LastBlock, BlockCount = 15, 0, 0
-local VIM = game:GetService("VirtualInputManager")
 
 local function FindBlockBtn()
    local pg = LP:FindFirstChild("PlayerGui")
@@ -494,7 +507,7 @@ for _, pl in pairs(game.Players:GetPlayers()) do MonitorP(pl) end
 game.Players.PlayerAdded:Connect(MonitorP)
 
 ----------------------------------------------------------------
--- 11) NỘI DUNG TỪNG TAB
+-- NỘI DUNG TỪNG TAB
 ----------------------------------------------------------------
 Section(TabC, "Tự động")
 Toggle(TabC, "⚡ Auto Block", false, function(v) AutoBlockOn = v end)
@@ -514,10 +527,10 @@ Slider(TabP, "JumpPower", 50, 300, 50, function(v)
    end
 end)
 Section(TabP, "Khác")
-Button(TabP, "🔄 Respawn", function() LP:LoadCharacter() end)
+Btn(TabP, "🔄 Respawn", function() LP:LoadCharacter() end)
 
 Section(TabT, "Dịch chuyển")
-Button(TabT, "👥 TP tới người chơi", function()
+Btn(TabT, "👥 TP tới người chơi", function()
    for _, p in pairs(game.Players:GetPlayers()) do
       if p ~= LP and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
          LP.Character:WaitForChild("HumanoidRootPart").CFrame = p.Character.HumanoidRootPart.CFrame * CFrame.new(0,0,3)
@@ -525,7 +538,7 @@ Button(TabT, "👥 TP tới người chơi", function()
       end
    end
 end)
-Button(TabT, "⬆️ Lên cao 200", function()
+Btn(TabT, "⬆️ Lên cao 200", function()
    if LP.Character and LP.Character:FindFirstChild("HumanoidRootPart") then
       LP.Character.HumanoidRootPart.CFrame = LP.Character.HumanoidRootPart.CFrame + Vector3.new(0,200,0)
    end
@@ -534,23 +547,9 @@ end)
 Section(TabF, "Tự động")
 local autoFarm = false
 Toggle(TabF, "💰 Auto Coins", false, function(v) autoFarm = v end)
-task.spawn(function()
-   while true do
-      task.wait(0.5)
-      if autoFarm then
-         pcall(function()
-            for _, v in pairs(workspace:GetDescendants()) do
-               if v:IsA("ProximityPrompt") and v.Parent then
-                  fireproximityprompt(v)
-               end
-            end
-         end)
-      end
-   end
-end)
 
 Section(TabM, "Tiện ích")
-Button(TabM, "🛡 Anti-AFK", function()
+Btn(TabM, "🛡 Anti-AFK", function()
    pcall(function()
       local vu = game:GetService("VirtualUser")
       LP.Idled:Connect(function()
@@ -559,43 +558,28 @@ Button(TabM, "🛡 Anti-AFK", function()
          vu:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
       end)
    end)
-   Label(TabM, "✅ Anti-AFK bật")
 end)
-Button(TabM, "🔁 Rejoin", function()
+Btn(TabM, "🔁 Rejoin", function()
    pcall(function() game:GetService("TeleportService"):Teleport(game.PlaceId, LP) end)
-end)
-Button(TabM, "🌍 Server Hop", function()
-   pcall(function()
-      local http = game:GetService("HttpService")
-      local data = http:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/0?sortOrder=Asc&limit=100"))
-      for _, s in pairs(data.data) do
-         if s.playing < s.maxPlayers and s.id ~= game.JobId then
-            game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, s.id)
-            return
-         end
-      end
-   end)
 end)
 
 Section(TabD, "Công cụ")
-Button(TabD, "🔍 Quét nút Block", function()
+Btn(TabD, "🔍 Quét nút Block", function()
    CachedBtn = nil; CachedAt = 0
    local b = GetBlockBtn()
-   if b then Label(TabD, "✅ Tìm: " .. b.Name) else Label(TabD, "❌ Không thấy") end
+   Lbl(TabD, b and ("✅ " .. b.Name) or "❌ Không thấy")
 end)
-Button(TabD, "🧪 Test Block", function()
-   LastBlock = 0; PerformBlock(); Label(TabD, "🧪 count: " .. BlockCount)
+Btn(TabD, "🧪 Test Block", function()
+   LastBlock = 0; PerformBlock(); Lbl(TabD, "🧪 count: " .. BlockCount)
 end)
-Button(TabD, "🧹 Clear", function() CachedBtn = nil; CachedAt = 0; Label(TabD, "🧹 OK") end)
 
 Section(TabI, "Tài khoản")
-Label(TabI, "👤 @" .. LP.Name)
-Label(TabI, "✨ " .. LP.DisplayName)
-Label(TabI, "🆔 " .. tostring(LP.UserId))
-Label(TabI, "📅 " .. LP.AccountAge .. " ngày")
-Label(TabI, "📱 " .. (IsMobile and "Mobile" or "PC"))
-Label(TabI, "🎮 " .. game.PlaceId)
-local countLbl = Label(TabI, "🛡 Blocks: 0")
+Lbl(TabI, "👤 @" .. LP.Name)
+Lbl(TabI, "✨ " .. LP.DisplayName)
+Lbl(TabI, "🆔 " .. tostring(LP.UserId))
+Lbl(TabI, "📅 " .. LP.AccountAge .. " ngày")
+Lbl(TabI, "📱 " .. (IsMobile and "Mobile" or "PC"))
+local countLbl = Lbl(TabI, "🛡 Blocks: 0")
 task.spawn(function()
    while countLbl and countLbl.Parent do
       pcall(function() countLbl.Text = "🛡 Blocks: " .. BlockCount end)
@@ -604,40 +588,20 @@ task.spawn(function()
 end)
 
 ----------------------------------------------------------------
--- 12) TOGGLE ĐÓNG/MỞ - TÁCH BIỆT
+-- XẾP LAYOUT CHO TỪNG PAGE
+----------------------------------------------------------------
+task.defer(function()
+   for _, pg in pairs(Pages) do
+      layoutPage(pg)
+   end
+end)
+
+----------------------------------------------------------------
+-- TOGGLE ĐÓNG/MỞ
 ----------------------------------------------------------------
 Tog.MouseButton1Click:Connect(function()
    Main.Visible = not Main.Visible
 end)
-
 CB.MouseButton1Click:Connect(function()
    Main.Visible = false
 end)
-
-----------------------------------------------------------------
--- 13) KÉO THẢ
-----------------------------------------------------------------
-do
-   local drag, ds, sp
-   Head.InputBegan:Connect(function(i)
-      if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
-         drag = true; ds = i.Position; sp = Main.Position
-      end
-   end)
-   Head.InputEnded:Connect(function(i)
-      if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
-         drag = false
-      end
-   end)
-   UIS.InputChanged:Connect(function(i)
-      if drag and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then
-         local d = i.Position - ds
-         Main.Position = UDim2.new(sp.X.Scale, sp.X.Offset + d.X, sp.Y.Scale, sp.Y.Offset + d.Y)
-      end
-   end)
-end
-
-----------------------------------------------------------------
--- 14) MỞ MENU NGAY (không loading - cho test nhanh)
-----------------------------------------------------------------
-Main.Visible = true
