@@ -1,210 +1,75 @@
 --[[
-    THINH HUB V1 - FINAL FIX
-    - Loading 7s (clean destroy)
-    - Menu custom, Content dùng Frame thường (không ScrollingFrame)
-    - Toggle đơn giản, hoạt động chắc chắn
-    - 7 tab đầy đủ
+    THINH HUB V1 - SIÊU GỌN (TEST MODE)
+    - Không load ảnh (tránh crash)
+    - Không Background blur
+    - Mỗi thứ 1 frame riêng, KHÔNG ScrollingFrame
+    - 7 tab đơn giản, chắc chắn hoạt động
 ]]
 
-local Players = game:GetService("Players")
-local TS = game:GetService("TweenService")
-local UIS = game:GetService("UserInputService")
-local VIM = game:GetService("VirtualInputManager")
-local RS = game:GetService("RunService")
-local Http = game:GetService("HttpService")
-local TPS = game:GetService("TeleportService")
-local LP = Players.LocalPlayer
+local LP = game.Players.LocalPlayer
 local PG = LP:WaitForChild("PlayerGui")
+local UIS = game:GetService("UserInputService")
 local IsMobile = UIS.TouchEnabled and not UIS.KeyboardEnabled
 
-local function T(o, p, d) TS:Create(o, TweenInfo.new(d or 0.25), p):Play() end
-local function C(p, r) local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, r or 8); c.Parent = p; return c end
+local function C(p, r) local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, r or 8); c.Parent = p end
 local function S(p, col, t) local s = Instance.new("UIStroke"); s.Color = col or Color3.fromRGB(70,130,255); s.Thickness = t or 1.5; s.Parent = p end
-local function Pad(p, t, r, b, l) local x = Instance.new("UIPadding"); x.PaddingTop=t or 0; x.PaddingRight=r or 0; x.PaddingBottom=b or 0; x.PaddingLeft=l or 0; x.Parent = p end
 
 ----------------------------------------------------------------
--- LOADING 7s
-----------------------------------------------------------------
-do
-   local Loader = Instance.new("ScreenGui")
-   Loader.Name = "_Loader"
-   Loader.IgnoreGuiInset = true
-   Loader.DisplayOrder = 999
-   Loader.Parent = PG
-
-   local BG = Instance.new("Frame")
-   BG.Size = UDim2.fromScale(1, 1)
-   BG.BackgroundColor3 = Color3.fromRGB(8, 10, 18)
-   BG.BorderSizePixel = 0
-   BG.Parent = Loader
-
-   local Card = Instance.new("Frame")
-   Card.AnchorPoint = Vector2.new(0.5, 0.5)
-   Card.Position = UDim2.fromScale(0.5, 0.5)
-   Card.Size = UDim2.new(0, 460, 0, 300)
-   Card.BackgroundColor3 = Color3.fromRGB(22, 25, 40)
-   Card.BorderSizePixel = 0
-   Card.Parent = BG
-   C(Card, 16); S(Card, Color3.fromRGB(70, 130, 255), 2)
-
-   local Tit = Instance.new("TextLabel")
-   Tit.Size = UDim2.new(1, 0, 0, 48)
-   Tit.Position = UDim2.new(0, 0, 0, 22)
-   Tit.BackgroundTransparency = 1
-   Tit.Font = Enum.Font.GothamBold
-   Tit.Text = "⚡ THINH HUB"
-   Tit.TextSize = 40
-   Tit.TextColor3 = Color3.fromRGB(120, 180, 255)
-   Tit.Parent = Card
-
-   local Sub = Instance.new("TextLabel")
-   Sub.Size = UDim2.new(1, 0, 0, 18)
-   Sub.Position = UDim2.new(0, 0, 0, 72)
-   Sub.BackgroundTransparency = 1
-   Sub.Font = Enum.Font.Gotham
-   Sub.Text = "V1 - Auto Block JJS"
-   Sub.TextSize = 13
-   Sub.TextColor3 = Color3.fromRGB(160, 170, 200)
-   Sub.Parent = Card
-
-   local Av = Instance.new("ImageLabel")
-   Av.AnchorPoint = Vector2.new(0.5, 0)
-   Av.Position = UDim2.new(0.5, 0, 0, 105)
-   Av.Size = UDim2.fromOffset(90, 90)
-   Av.BackgroundColor3 = Color3.fromRGB(40, 45, 65)
-   Av.BorderSizePixel = 0
-   Av.Parent = Card
-   C(Av, 99); S(Av, Color3.fromRGB(70, 130, 255), 3)
-
-   pcall(function()
-      Av.Image = Players:GetUserThumbnailAsync(LP.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size150x150)
-   end)
-
-   local UN = Instance.new("TextLabel")
-   UN.Size = UDim2.new(1, -40, 0, 22)
-   UN.Position = UDim2.new(0, 20, 0, 210)
-   UN.BackgroundTransparency = 1
-   UN.Font = Enum.Font.GothamBold
-   UN.Text = "@" .. LP.Name
-   UN.TextSize = 17
-   UN.TextColor3 = Color3.fromRGB(255, 255, 255)
-   UN.TextXAlignment = Enum.TextXAlignment.Left
-   UN.Parent = Card
-
-   local DN = Instance.new("TextLabel")
-   DN.Size = UDim2.new(1, -40, 0, 16)
-   DN.Position = UDim2.new(0, 20, 0, 232)
-   DN.BackgroundTransparency = 1
-   DN.Font = Enum.Font.Gotham
-   DN.Text = LP.DisplayName
-   DN.TextSize = 12
-   DN.TextColor3 = Color3.fromRGB(140, 150, 180)
-   DN.TextXAlignment = Enum.TextXAlignment.Left
-   DN.Parent = Card
-
-   local BBG = Instance.new("Frame")
-   BBG.AnchorPoint = Vector2.new(0.5, 0)
-   BBG.Position = UDim2.new(0.5, 0, 0, 256)
-   BBG.Size = UDim2.new(0.8, 0, 0, 6)
-   BBG.BackgroundColor3 = Color3.fromRGB(35, 40, 60)
-   BBG.BorderSizePixel = 0
-   BBG.Parent = Card
-   C(BBG, 99)
-
-   local BF = Instance.new("Frame")
-   BF.Size = UDim2.new(0, 0, 1, 0)
-   BF.BackgroundColor3 = Color3.fromRGB(80, 150, 255)
-   BF.BorderSizePixel = 0
-   BF.Parent = BBG
-   C(BF, 99)
-
-   local StTxt = Instance.new("TextLabel")
-   StTxt.Size = UDim2.new(1, 0, 0, 16)
-   StTxt.Position = UDim2.new(0, 0, 1, -20)
-   StTxt.BackgroundTransparency = 1
-   StTxt.Font = Enum.Font.Gotham
-   StTxt.Text = "Đang khởi tạo..."
-   StTxt.TextSize = 11
-   StTxt.TextColor3 = Color3.fromRGB(140, 150, 180)
-   StTxt.Parent = Card
-
-   local steps = {
-      {p = 0.12, t = "Đang tải modules..."},
-      {p = 0.28, t = "Đang quét PlayerGui..."},
-      {p = 0.48, t = "Đang nạp attack IDs..."},
-      {p = 0.68, t = "Đang kết nối animations..."},
-      {p = 0.86, t = "Đang build menu..."},
-      {p = 1.00, t = "Xong!"},
-   }
-   for _, s in ipairs(steps) do
-      StTxt.Text = s.t
-      T(BF, {Size = UDim2.new(s.p, 0, 1, 0)}, 0.9)
-      task.wait(7 / #steps)
-   end
-   -- Destroy sạch sẽ
-   pcall(function() Loader:Destroy() end)
-end
-
-----------------------------------------------------------------
--- MENU CHÍNH
+-- 1) SCREENGUI
 ----------------------------------------------------------------
 local Menu = Instance.new("ScreenGui")
-Menu.Name = "ThinhHub_V1"
-Menu.DisplayOrder = 100
+Menu.Name = "ThinhHub"
+Menu.DisplayOrder = 999
+Menu.IgnoreGuiInset = false
 Menu.ResetOnSpawn = false
 Menu.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 Menu.Parent = PG
 
--- Kích thước
-local MENU_W = IsMobile and 380 or 600
-local MENU_H = IsMobile and 540 or 460
-local SIDE_W = 100
-local HEADER_H = 50
-
--- Toggle button (đặt SAU menu)
-local Tog = Instance.new("ImageButton")
-Tog.Name = "ToggleBtn"
-Tog.AnchorPoint = Vector2.new(1, 0)
-Tog.Position = UDim2.new(1, -16, 0, 16)
-Tog.Size = UDim2.fromOffset(50, 50)
+----------------------------------------------------------------
+-- 2) NÚT TOGGLE (≡) - luôn hiển thị, dùng để MỞ
+----------------------------------------------------------------
+local Tog = Instance.new("TextButton")
+Tog.Name = "Toggle"
+Tog.Size = UDim2.fromOffset(56, 56)
+Tog.Position = UDim2.new(1, -70, 0, 20)
+Tog.AnchorPoint = Vector2.new(0, 0)
 Tog.BackgroundColor3 = Color3.fromRGB(70, 130, 255)
-Tog.Image = "rbxassetid://3926305904"
-Tog.ImageRectOffset = Vector2.new(764, 244)
-Tog.ImageRectSize = Vector2.new(36, 36)
-Tog.ImageColor3 = Color3.fromRGB(255, 255, 255)
-Tog.ZIndex = 999
+Tog.Text = "≡"
+Tog.TextSize = 28
+Tog.TextColor3 = Color3.fromRGB(255, 255, 255)
+Tog.Font = Enum.Font.GothamBold
+Tog.BorderSizePixel = 0
 Tog.Parent = Menu
 C(Tog, 99); S(Tog, Color3.fromRGB(255, 255, 255), 2)
 
--- Main
+----------------------------------------------------------------
+-- 3) MAIN FRAME
+----------------------------------------------------------------
 local Main = Instance.new("Frame")
 Main.Name = "Main"
-Main.AnchorPoint = Vector2.new(0.5, 0.5)
+Main.Size = UDim2.fromOffset(IsMobile and 360 or 580, IsMobile and 520 or 440)
 Main.Position = UDim2.fromScale(0.5, 0.5)
-Main.Size = UDim2.fromOffset(MENU_W, MENU_H)
+Main.AnchorPoint = Vector2.new(0.5, 0.5)
 Main.BackgroundColor3 = Color3.fromRGB(18, 20, 32)
 Main.BorderSizePixel = 0
-Main.Visible = true
+Main.Visible = false
 Main.Parent = Menu
 C(Main, 12); S(Main, Color3.fromRGB(70, 130, 255), 2)
 
--- Header
+----------------------------------------------------------------
+-- 4) HEADER
+----------------------------------------------------------------
 local Head = Instance.new("Frame")
 Head.Name = "Header"
-Head.Size = UDim2.new(1, 0, 0, HEADER_H)
+Head.Size = UDim2.new(1, 0, 0, 50)
 Head.BackgroundColor3 = Color3.fromRGB(28, 32, 50)
 Head.BorderSizePixel = 0
 Head.Parent = Main
 C(Head, 12)
-local HF = Instance.new("Frame")
-HF.Size = UDim2.new(1, 0, 0, 14)
-HF.Position = UDim2.new(0, 0, 1, -14)
-HF.BackgroundColor3 = Color3.fromRGB(28, 32, 50)
-HF.BorderSizePixel = 0
-HF.Parent = Head
+local HF = Instance.new("Frame"); HF.Size = UDim2.new(1,0,0,14); HF.Position = UDim2.new(0,0,1,-14); HF.BackgroundColor3 = Color3.fromRGB(28,32,50); HF.BorderSizePixel = 0; HF.Parent = Head
 
 local HT = Instance.new("TextLabel")
-HT.Size = UDim2.new(1, -110, 0, 26)
+HT.Size = UDim2.new(1, -90, 0, 28)
 HT.Position = UDim2.new(0, 16, 0, 4)
 HT.BackgroundTransparency = 1
 HT.Font = Enum.Font.GothamBold
@@ -215,129 +80,87 @@ HT.TextXAlignment = Enum.TextXAlignment.Left
 HT.Parent = Head
 
 local HS = Instance.new("TextLabel")
-HS.Size = UDim2.new(1, -110, 0, 14)
-HS.Position = UDim2.new(0, 16, 0, 30)
+HS.Size = UDim2.new(1, -90, 0, 14)
+HS.Position = UDim2.new(0, 16, 0, 32)
 HS.BackgroundTransparency = 1
 HS.Font = Enum.Font.Gotham
-HS.Text = "@" .. LP.Name .. " • " .. (IsMobile and "📱" or "💻")
+HS.Text = "@" .. LP.Name .. " - " .. (IsMobile and "Mobile" or "PC")
 HS.TextSize = 11
 HS.TextColor3 = Color3.fromRGB(150, 170, 200)
 HS.TextXAlignment = Enum.TextXAlignment.Left
 HS.Parent = Head
 
+-- NÚT ĐÓNG (đặt trong header, layer cao nhất)
 local CB = Instance.new("TextButton")
 CB.Name = "CloseBtn"
+CB.Size = UDim2.fromOffset(36, 36)
+CB.Position = UDim2.new(1, -7, 0.5, 0)
 CB.AnchorPoint = Vector2.new(1, 0.5)
-CB.Position = UDim2.new(1, -10, 0.5, 0)
-CB.Size = UDim2.fromOffset(30, 30)
-CB.BackgroundColor3 = Color3.fromRGB(200, 60, 60)
+CB.BackgroundColor3 = Color3.fromRGB(220, 60, 60)
 CB.Font = Enum.Font.GothamBold
 CB.Text = "X"
-CB.TextSize = 15
+CB.TextSize = 18
 CB.TextColor3 = Color3.fromRGB(255, 255, 255)
 CB.BorderSizePixel = 0
 CB.Parent = Head
-C(CB, 6)
-
--- Drag header
-do
-   local drag, ds, sp
-   Head.InputBegan:Connect(function(i)
-      if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
-         drag = true; ds = i.Position; sp = Main.Position
-      end
-   end)
-   Head.InputEnded:Connect(function(i)
-      if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
-         drag = false
-      end
-   end)
-   UIS.InputChanged:Connect(function(i)
-      if drag and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then
-         local d = i.Position - ds
-         Main.Position = UDim2.new(sp.X.Scale, sp.X.Offset + d.X, sp.Y.Scale, sp.Y.Offset + d.Y)
-      end
-   end)
-end
-
--- Drag toggle
-do
-   local drag, ds, sp
-   Tog.InputBegan:Connect(function(i)
-      if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
-         drag = true; ds = i.Position; sp = Tog.Position
-      end
-   end)
-   Tog.InputEnded:Connect(function(i)
-      if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
-         drag = false
-      end
-   end)
-   UIS.InputChanged:Connect(function(i)
-      if drag and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then
-         local d = i.Position - ds
-         Tog.Position = UDim2.new(sp.X.Scale, sp.X.Offset + d.X, sp.Y.Scale, sp.Y.Offset + d.Y)
-      end
-   end)
-end
+C(CB, 8)
 
 ----------------------------------------------------------------
--- SIDEBAR
+-- 5) SIDEBAR
 ----------------------------------------------------------------
+local SideW = IsMobile and 88 or 110
 local Side = Instance.new("ScrollingFrame")
 Side.Name = "Sidebar"
-Side.Size = UDim2.new(0, SIDE_W, 1, -HEADER_H - 12)
-Side.Position = UDim2.new(0, 6, 0, HEADER_H + 6)
+Side.Size = UDim2.new(0, SideW, 1, -60)
+Side.Position = UDim2.new(0, 6, 0, 54)
 Side.BackgroundColor3 = Color3.fromRGB(22, 25, 40)
 Side.BorderSizePixel = 0
 Side.ScrollBarThickness = 0
+Side.ScrollBarImageColor3 = Color3.fromRGB(70, 130, 255)
 Side.CanvasSize = UDim2.new(0, 0, 0, 0)
 Side.AutomaticCanvasSize = Enum.AutomaticSize.Y
 Side.Parent = Main
 C(Side, 8)
-Pad(Side, 6, 4, 6, 4)
-local SList = Instance.new("UIListLayout")
+local SList = UIListLayout and Instance.new("UIListLayout", Side) or nil
 SList.Padding = UDim.new(0, 4)
 SList.SortOrder = Enum.SortOrder.LayoutOrder
-SList.Parent = Side
+SList.HorizontalAlignment = Enum.HorizontalAlignment.Center
+local SPad = Instance.new("UIPadding"); SPad.PaddingTop = UDim.new(0,6); SPad.PaddingLeft = UDim.new(0,4); SPad.PaddingRight = UDim.new(0,4); SPad.Parent = Side
 
 ----------------------------------------------------------------
--- CONTENT (Frame thường, không dùng ScrollingFrame)
+-- 6) CONTENT
 ----------------------------------------------------------------
 local Content = Instance.new("Frame")
 Content.Name = "Content"
 Content.BackgroundColor3 = Color3.fromRGB(22, 25, 40)
 Content.BorderSizePixel = 0
 Content.ClipsDescendants = true
-Content.Size = UDim2.new(1, -SIDE_W - 18, 1, -HEADER_H - 12)
-Content.Position = UDim2.new(0, SIDE_W + 12, 0, HEADER_H + 6)
+Content.Size = UDim2.new(1, -SideW - 18, 1, -60)
+Content.Position = UDim2.new(0, SideW + 12, 0, 54)
 Content.Parent = Main
 C(Content, 8)
 
 ----------------------------------------------------------------
--- PAGES (mỗi tab là 1 Frame riêng)
+-- 7) PAGE SYSTEM
 ----------------------------------------------------------------
 local Pages = {}
-local curPage
 
 local function CreatePage(name, icon, order)
    local tab = Instance.new("TextButton")
-   tab.Name = "Tab_" .. name
-   tab.Size = UDim2.new(1, 0, 0, 32)
+   tab.Name = "T_" .. name
+   tab.Size = UDim2.new(1, 0, 0, 42)
    tab.BackgroundColor3 = Color3.fromRGB(35, 40, 60)
    tab.BorderSizePixel = 0
    tab.Font = Enum.Font.GothamMedium
-   tab.Text = "  " .. icon .. " " .. name
-   tab.TextSize = 11
+   tab.Text = icon .. "\n" .. name
+   tab.TextSize = 10
    tab.TextColor3 = Color3.fromRGB(200, 210, 230)
-   tab.TextXAlignment = Enum.TextXAlignment.Left
    tab.LayoutOrder = order
    tab.Parent = Side
    C(tab, 6)
-   Pad(tab, 0, 6, 0, 6)
 
    local page = Instance.new("ScrollingFrame")
-   page.Name = "Page_" .. name
+   page.Name = "P_" .. name
    page.Size = UDim2.new(1, 0, 1, 0)
    page.BackgroundTransparency = 1
    page.BorderSizePixel = 0
@@ -347,21 +170,17 @@ local function CreatePage(name, icon, order)
    page.AutomaticCanvasSize = Enum.AutomaticSize.Y
    page.Visible = false
    page.Parent = Content
-   Pad(page, 8, 8, 8, 8)
-
-   -- QUAN TRỌNG: dùng UIListLayout nhưng KHÔNG có HorizontalAlignment
+   local ppad = Instance.new("UIPadding"); ppad.PaddingTop = UDim.new(0,10); ppad.PaddingBottom = UDim.new(0,10); ppad.PaddingLeft = UDim.new(0,10); ppad.PaddingRight = UDim.new(0,10); ppad.Parent = page
    local list = Instance.new("UIListLayout")
    list.Padding = UDim.new(0, 6)
    list.SortOrder = Enum.SortOrder.LayoutOrder
-   list.FillDirection = Enum.FillDirection.Vertical
-   list.HorizontalAlignment = Enum.HorizontalAlignment.Left  -- left để component full width
-   list.VerticalAlignment = Enum.VerticalAlignment.Top
+   list.HorizontalAlignment = Enum.HorizontalAlignment.Center
    list.Parent = page
 
-   Pages[name] = {tab = tab, page = page, list = list}
+   Pages[name] = {tab = tab, page = page}
 
    tab.MouseButton1Click:Connect(function()
-      for n, pg in pairs(Pages) do
+      for _, pg in pairs(Pages) do
          pg.page.Visible = false
          pg.tab.BackgroundColor3 = Color3.fromRGB(35, 40, 60)
          pg.tab.TextColor3 = Color3.fromRGB(200, 210, 230)
@@ -369,20 +188,19 @@ local function CreatePage(name, icon, order)
       page.Visible = true
       tab.BackgroundColor3 = Color3.fromRGB(70, 130, 255)
       tab.TextColor3 = Color3.fromRGB(255, 255, 255)
-      curPage = Pages[name]
    end)
 
    return Pages[name]
 end
 
 ----------------------------------------------------------------
--- COMPONENTS
+-- 8) COMPONENTS (đơn giản)
 ----------------------------------------------------------------
 local function O(p) return #p.page:GetChildren() * 10 end
 
 local function Section(p, txt)
    local l = Instance.new("TextLabel")
-   l.Size = UDim2.new(1, 0, 0, 18)
+   l.Size = UDim2.new(1, -10, 0, 18)
    l.BackgroundTransparency = 1
    l.Font = Enum.Font.GothamBold
    l.Text = txt:upper()
@@ -395,7 +213,7 @@ end
 
 local function Toggle(p, name, default, callback)
    local h = Instance.new("Frame")
-   h.Size = UDim2.new(1, 0, 0, 36)
+   h.Size = UDim2.new(1, -10, 0, 36)
    h.BackgroundColor3 = Color3.fromRGB(30, 33, 50)
    h.BorderSizePixel = 0
    h.LayoutOrder = O(p)
@@ -435,15 +253,15 @@ local function Toggle(p, name, default, callback)
    local state = default
    btn.MouseButton1Click:Connect(function()
       state = not state
-      T(btn, {BackgroundColor3 = state and Color3.fromRGB(70, 200, 120) or Color3.fromRGB(80, 85, 110)}, 0.2)
-      T(knob, {Position = state and UDim2.new(1, -20, 0.5, -9) or UDim2.new(0, 2, 0.5, -9)}, 0.2)
+      knob.Position = state and UDim2.new(1, -20, 0.5, -9) or UDim2.new(0, 2, 0.5, -9)
+      btn.BackgroundColor3 = state and Color3.fromRGB(70, 200, 120) or Color3.fromRGB(80, 85, 110)
       callback(state)
    end)
 end
 
 local function Slider(p, name, min, max, default, callback)
    local h = Instance.new("Frame")
-   h.Size = UDim2.new(1, 0, 0, 50)
+   h.Size = UDim2.new(1, -10, 0, 50)
    h.BackgroundColor3 = Color3.fromRGB(30, 33, 50)
    h.BorderSizePixel = 0
    h.LayoutOrder = O(p)
@@ -517,7 +335,7 @@ end
 
 local function Button(p, name, callback)
    local b = Instance.new("TextButton")
-   b.Size = UDim2.new(1, 0, 0, 34)
+   b.Size = UDim2.new(1, -10, 0, 36)
    b.BackgroundColor3 = Color3.fromRGB(70, 130, 255)
    b.BorderSizePixel = 0
    b.Font = Enum.Font.GothamBold
@@ -527,54 +345,12 @@ local function Button(p, name, callback)
    b.LayoutOrder = O(p)
    b.Parent = p.page
    C(b, 6)
-   b.MouseButton1Click:Connect(function()
-      T(b, {BackgroundColor3 = Color3.fromRGB(40, 80, 180)}, 0.08)
-      task.wait(0.08)
-      T(b, {BackgroundColor3 = Color3.fromRGB(70, 130, 255)}, 0.15)
-      callback()
-   end)
-   b.MouseEnter:Connect(function() T(b, {BackgroundColor3 = Color3.fromRGB(90, 150, 255)}, 0.15) end)
-   b.MouseLeave:Connect(function() T(b, {BackgroundColor3 = Color3.fromRGB(70, 130, 255)}, 0.15) end)
-end
-
-local function Input(p, name, ph, callback)
-   local h = Instance.new("Frame")
-   h.Size = UDim2.new(1, 0, 0, 58)
-   h.BackgroundColor3 = Color3.fromRGB(30, 33, 50)
-   h.BorderSizePixel = 0
-   h.LayoutOrder = O(p)
-   h.Parent = p.page
-   C(h, 6)
-   local l = Instance.new("TextLabel")
-   l.Size = UDim2.new(1, -20, 0, 20)
-   l.Position = UDim2.new(0, 10, 0, 4)
-   l.BackgroundTransparency = 1
-   l.Font = Enum.Font.GothamMedium
-   l.Text = name
-   l.TextSize = 12
-   l.TextColor3 = Color3.fromRGB(230, 235, 245)
-   l.TextXAlignment = Enum.TextXAlignment.Left
-   l.Parent = h
-   local tb = Instance.new("TextBox")
-   tb.Size = UDim2.new(1, -20, 0, 26)
-   tb.Position = UDim2.new(0, 10, 0, 26)
-   tb.BackgroundColor3 = Color3.fromRGB(20, 22, 35)
-   tb.BorderSizePixel = 0
-   tb.Font = Enum.Font.Gotham
-   tb.PlaceholderText = ph or ""
-   tb.Text = ""
-   tb.TextSize = 12
-   tb.TextColor3 = Color3.fromRGB(220, 225, 240)
-   tb.PlaceholderColor3 = Color3.fromRGB(100, 110, 130)
-   tb.ClearTextOnFocus = true
-   tb.Parent = h
-   C(tb, 4)
-   tb.FocusLost:Connect(function(enter) if enter then callback(tb.Text) end end)
+   b.MouseButton1Click:Connect(callback)
 end
 
 local function Label(p, text)
    local l = Instance.new("TextLabel")
-   l.Size = UDim2.new(1, 0, 0, 22)
+   l.Size = UDim2.new(1, -10, 0, 22)
    l.BackgroundTransparency = 1
    l.Font = Enum.Font.Gotham
    l.Text = text
@@ -584,63 +360,50 @@ local function Label(p, text)
    l.TextWrapped = true
    l.LayoutOrder = O(p)
    l.Parent = p.page
-   return l
 end
 
 ----------------------------------------------------------------
--- TẠO TẤT CẢ TAB
+-- 9) TẠO CÁC TAB
 ----------------------------------------------------------------
-local TabCombat = CreatePage("Combat",  "⚔", 1)
-local TabPlayer = CreatePage("Player",  "🏃", 2)
-local TabTP     = CreatePage("TP",      "📍", 3)
-local TabFarm   = CreatePage("Farm",    "💰", 4)
-local TabMisc   = CreatePage("Misc",    "⚙", 5)
-local TabDebug  = CreatePage("Debug",   "🔧", 6)
-local TabInfo   = CreatePage("Info",    "ℹ", 7)
+local TabC = CreatePage("Combat", "⚔", 1)
+local TabP = CreatePage("Player", "🏃", 2)
+local TabT = CreatePage("TP", "📍", 3)
+local TabF = CreatePage("Farm", "💰", 4)
+local TabM = CreatePage("Misc", "⚙", 5)
+local TabD = CreatePage("Debug","🔧", 6)
+local TabI = CreatePage("Info", "ℹ", 7)
 
--- Mở tab Combat đầu tiên
-curPage = TabCombat
-TabCombat.tab.BackgroundColor3 = Color3.fromRGB(70, 130, 255)
-TabCombat.tab.TextColor3 = Color3.fromRGB(255, 255, 255)
-TabCombat.page.Visible = true
+TabC.tab.BackgroundColor3 = Color3.fromRGB(70, 130, 255)
+TabC.tab.TextColor3 = Color3.fromRGB(255, 255, 255)
+TabC.page.Visible = true
 
 ----------------------------------------------------------------
--- LOGIC AUTO BLOCK
+-- 10) AUTO BLOCK
 ----------------------------------------------------------------
 local AttackAnimIDs = {
-   ["95421145178968"]  = true, ["138898960225788"] = true, ["137844586546509"] = true,
-   ["120133391090244"]  = true, ["96489184596023"]   = true, ["13826705245289"]   = true,
-   ["140491244934559"]  = true, ["1012839390868172"] = true, ["139479927693015"]  = true,
-   ["119619096808750"]  = true, ["104408538049330"]  = true, ["77705898607209"]   = true,
-   ["10468665991"]  = true, ["13560306510"]  = true, ["12510170988"]  = true,
-   ["12983333733"]  = true, ["12832505612"]  = true, ["10471336737"]  = true,
-   ["17861840167"]  = true,
+   ["95421145178968"]=true,["138898960225788"]=true,["137844586546509"]=true,
+   ["120133391090244"]=true,["96489184596023"]=true,["13826705245289"]=true,
+   ["140491244934559"]=true,["1012839390868172"]=true,["139479927693015"]=true,
+   ["119619096808750"]=true,["104408538049330"]=true,["77705898607209"]=true,
+   ["10468665991"]=true,["13560306510"]=true,["12510170988"]=true,
+   ["12983333733"]=true,["12832505612"]=true,["10471336737"]=true,["17861840167"]=true,
 }
-local SafeKeywords = {"walk","run","idle","jump","fall","land","swim","dash","climb","strafe","turn","sprint","emote","sit","sleep","death","die","hurt","stun","block","defend","parry"}
-local AttackKeywords = {"slash","stab","punch","kick","swing","smash","cut","thrust","slice","attack","hit","combo","slam","uppercut","jab","hook","bash","cleave","impale","spin"}
-local BlockKeywords = {"block","defend","shield","parry","guard","def","button1","btn1","skill1","action1","combat1","ability1"}
+local AtkK = {"slash","stab","punch","kick","swing","smash","cut","thrust","slice","attack","hit","combo","slam","uppercut","jab","hook","bash","cleave","impale","spin"}
+local BlockK = {"block","defend","shield","parry","guard","def","button1","btn1","skill1","action1","combat1","ability1"}
 
-local AutoBlockOn = false
-local DynamicOn = true
-local LockFacing = true
-local BlockRange = 15
-local LastBlock = 0
-local BlockCount = 0
+local AutoBlockOn, DynamicOn, LockFacing = false, true, true
+local BlockRange, LastBlock, BlockCount = 15, 0, 0
+local VIM = game:GetService("VirtualInputManager")
 
-local function FindBlockButton()
+local function FindBlockBtn()
    local pg = LP:FindFirstChild("PlayerGui")
    if not pg then return nil end
    local best, bestS = nil, 0
-   local function score(name)
-      local n = name:lower(); local s = 0
-      for _, kw in ipairs(BlockKeywords) do
-         if n:find(kw) then s = s + #kw end
-      end
-      return s
-   end
    for _, v in pairs(pg:GetDescendants()) do
       if (v:IsA("ImageButton") or v:IsA("TextButton") or v:IsA("GuiButton")) and v.Visible then
-         local s = score(v.Name)
+         local n = v.Name:lower()
+         local s = 0
+         for _, kw in ipairs(BlockK) do if n:find(kw) then s = s + #kw end end
          if s > bestS then bestS = s; best = v end
       end
    end
@@ -648,12 +411,12 @@ local function FindBlockButton()
 end
 
 local CachedBtn, CachedAt = nil, 0
-local function GetBlockButton()
+local function GetBlockBtn()
    if CachedBtn and CachedBtn.Parent and CachedBtn.Visible then return CachedBtn end
    if tick() - CachedAt < 1.5 then return nil end
    CachedAt = tick()
-   local btn, sc = FindBlockButton()
-   if btn and sc > 0 then CachedBtn = btn; return btn end
+   local b, s = FindBlockBtn()
+   if b and s > 0 then CachedBtn = b; return b end
    return nil
 end
 
@@ -663,11 +426,11 @@ local function PerformBlock()
    BlockCount = BlockCount + 1
    task.spawn(function()
       if IsMobile then
-         local btn = GetBlockButton()
-         if btn then
+         local b = GetBlockBtn()
+         if b then
             pcall(function()
                for _, sn in ipairs({"MouseButton1Click","MouseButton1Down","Activated","TouchTap"}) do
-                  local sig = btn[sn]
+                  local sig = b[sn]
                   if sig then for _, c in ipairs(getconnections(sig)) do pcall(function() c:Fire() end) end end
                end
             end)
@@ -675,9 +438,9 @@ local function PerformBlock()
                local ch = LP.Character
                if ch then
                   local tool = ch:FindFirstChildWhichIsA("Tool") or ch
-                  firetouchinterest(tool, btn, 0)
+                  firetouchinterest(tool, b, 0)
                   task.wait(0.03)
-                  firetouchinterest(tool, btn, 1)
+                  firetouchinterest(tool, b, 1)
                end
             end)
          else
@@ -693,238 +456,188 @@ local function PerformBlock()
    end)
 end
 
-local function FaceAttacker(attackerRoot)
+local function FaceAtk(r)
    if not LockFacing then return end
    local ch = LP.Character
    if not ch or not ch:FindFirstChild("HumanoidRootPart") then return end
    local my = ch.HumanoidRootPart
-   local dir = (attackerRoot.Position - my.Position) * Vector3.new(1,0,1)
-   if dir.Magnitude > 0.1 then
-      my.CFrame = CFrame.lookAt(my.Position, my.Position + dir.Unit)
-   end
+   local d = (r.Position - my.Position) * Vector3.new(1,0,1)
+   if d.Magnitude > 0.1 then my.CFrame = CFrame.lookAt(my.Position, my.Position + d.Unit) end
 end
 
-local function isAttackName(name)
-   local n = name:lower()
-   for _, w in ipairs(AttackKeywords) do if n:find(w) then return true end end
+local function isAtkName(n)
+   for _, w in ipairs(AtkK) do if n:lower():find(w) then return true end end
    return false
 end
 
-local function MonitorPlayer(p)
+local function MonitorP(p)
    if p == LP then return end
-   local function onChar(c)
+   local function onC(c)
       local h = c:WaitForChild("Humanoid", 10)
       if not h then return end
-      h.AnimationPlayed:Connect(function(track)
+      h.AnimationPlayed:Connect(function(tr)
          if not AutoBlockOn then return end
          local my = LP.Character
          if not my or not my:FindFirstChild("HumanoidRootPart") or not c:FindFirstChild("HumanoidRootPart") then return end
          if (c.HumanoidRootPart.Position - my.HumanoidRootPart.Position).Magnitude > BlockRange then return end
-         local id = (track.Animation and track.Animation.AnimationId or ""):match("%d+")
-         local name = track.Name or ""
-         if (id and AttackAnimIDs[id]) or (DynamicOn and isAttackName(name)) then
-            FaceAttacker(c.HumanoidRootPart)
+         local id = (tr.Animation and tr.Animation.AnimationId or ""):match("%d+")
+         if (id and AttackAnimIDs[id]) or (DynamicOn and isAtkName(tr.Name or "")) then
+            FaceAtk(c.HumanoidRootPart)
             PerformBlock()
          end
       end)
    end
-   if p.Character then onChar(p.Character) end
-   p.CharacterAdded:Connect(onChar)
+   if p.Character then onC(p.Character) end
+   p.CharacterAdded:Connect(onC)
 end
-for _, pl in pairs(Players:GetPlayers()) do MonitorPlayer(pl) end
-Players.PlayerAdded:Connect(MonitorPlayer)
+for _, pl in pairs(game.Players:GetPlayers()) do MonitorP(pl) end
+game.Players.PlayerAdded:Connect(MonitorP)
 
 ----------------------------------------------------------------
--- COMBAT TAB
+-- 11) NỘI DUNG TỪNG TAB
 ----------------------------------------------------------------
-Section(TabCombat, "Tự động")
-Toggle(TabCombat, "⚡ Auto Block", false, function(v) AutoBlockOn = v end)
-Toggle(TabCombat, "🧠 Smart Detection", true, function(v) DynamicOn = v end)
-Toggle(TabCombat, "🔒 Lock Facing", true, function(v) LockFacing = v end)
-Section(TabCombat, "Tầm đỡ")
-Slider(TabCombat, "Block Range", 8, 25, 15, function(v) BlockRange = v end)
+Section(TabC, "Tự động")
+Toggle(TabC, "⚡ Auto Block", false, function(v) AutoBlockOn = v end)
+Toggle(TabC, "🧠 Smart Detection", true, function(v) DynamicOn = v end)
+Toggle(TabC, "🔒 Lock Facing", true, function(v) LockFacing = v end)
+Section(TabC, "Tầm đỡ")
+Slider(TabC, "Block Range", 8, 25, 15, function(v) BlockRange = v end)
 
-----------------------------------------------------------------
--- PLAYER TAB
-----------------------------------------------------------------
-Section(TabPlayer, "Di chuyển")
-Slider(TabPlayer, "WalkSpeed", 16, 250, 16, function(v)
-   if LP.Character and LP.Character:FindFirstChild("Humanoid") then
-      LP.Character.Humanoid.WalkSpeed = v
-   end
+Section(TabP, "Di chuyển")
+Slider(TabP, "WalkSpeed", 16, 250, 16, function(v)
+   if LP.Character and LP.Character:FindFirstChild("Humanoid") then LP.Character.Humanoid.WalkSpeed = v end
 end)
-Slider(TabPlayer, "JumpPower", 50, 300, 50, function(v)
+Slider(TabP, "JumpPower", 50, 300, 50, function(v)
    if LP.Character and LP.Character:FindFirstChild("Humanoid") then
       LP.Character.Humanoid.UseJumpPower = true
       LP.Character.Humanoid.JumpPower = v
    end
 end)
+Section(TabP, "Khác")
+Button(TabP, "🔄 Respawn", function() LP:LoadCharacter() end)
 
-Section(TabPlayer, "Bay")
-local flyConn
-Toggle(TabPlayer, "✈️ Fly (E/B)", false, function(state)
-   if not LP.Character or not LP.Character:FindFirstChild("HumanoidRootPart") then return end
-   local body = LP.Character.HumanoidRootPart
-   if state then
-      local bv = Instance.new("BodyVelocity", body)
-      bv.Name = "FlyBV"; bv.MaxForce = Vector3.new(1e9,1e9,1e9); bv.Velocity = Vector3.zero
-      local bg = Instance.new("BodyGyro", body)
-      bg.Name = "FlyBG"; bg.MaxTorque = Vector3.new(1e9,1e9,1e9); bg.P = 9e4
-      flyConn = RS.Heartbeat:Connect(function()
-         local dir = Vector3.zero
-         if UIS:IsKeyDown(Enum.KeyCode.W) then dir = dir + body.CFrame.LookVector end
-         if UIS:IsKeyDown(Enum.KeyCode.S) then dir = dir - body.CFrame.LookVector end
-         if UIS:IsKeyDown(Enum.KeyCode.A) then dir = dir - body.CFrame.RightVector end
-         if UIS:IsKeyDown(Enum.KeyCode.D) then dir = dir + body.CFrame.RightVector end
-         if UIS:IsKeyDown(Enum.KeyCode.E) then dir = dir + Vector3.new(0,1,0) end
-         if UIS:IsKeyDown(Enum.KeyCode.B) then dir = dir - Vector3.new(0,1,0) end
-         bv.Velocity = dir * 80
-         bg.CFrame = body.CFrame
-      end)
-   else
-      if flyConn then flyConn:Disconnect() end
-      if body:FindFirstChild("FlyBV") then body.FlyBV:Destroy() end
-      if body:FindFirstChild("FlyBG") then body.FlyBG:Destroy() end
-   end
-end)
-
-Section(TabPlayer, "Khác")
-Button(TabPlayer, "🔄 Respawn", function() LP:LoadCharacter() end)
-
-----------------------------------------------------------------
--- TELEPORT TAB
-----------------------------------------------------------------
-Section(TabTP, "Dịch chuyển")
-Button(TabTP, "👥 TP tới người chơi", function()
-   for _, p in pairs(Players:GetPlayers()) do
+Section(TabT, "Dịch chuyển")
+Button(TabT, "👥 TP tới người chơi", function()
+   for _, p in pairs(game.Players:GetPlayers()) do
       if p ~= LP and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-         LP.Character:WaitForChild("HumanoidRootPart").CFrame =
-            p.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3)
+         LP.Character:WaitForChild("HumanoidRootPart").CFrame = p.Character.HumanoidRootPart.CFrame * CFrame.new(0,0,3)
          return
       end
    end
 end)
-Button(TabTP, "⬆️ Lên cao 200", function()
+Button(TabT, "⬆️ Lên cao 200", function()
    if LP.Character and LP.Character:FindFirstChild("HumanoidRootPart") then
-      LP.Character.HumanoidRootPart.CFrame =
-         LP.Character.HumanoidRootPart.CFrame + Vector3.new(0, 200, 0)
-   end
-end)
-Input(TabTP, "TP theo tọa độ", "0, 50, 0", function(text)
-   local x, y, z = text:match("([%-%d%.]+),%s*([%-%d%.]+),%s*([%-%d%.]+)")
-   if x and y and z and LP.Character and LP.Character:FindFirstChild("HumanoidRootPart") then
-      LP.Character.HumanoidRootPart.CFrame = CFrame.new(tonumber(x), tonumber(y), tonumber(z))
+      LP.Character.HumanoidRootPart.CFrame = LP.Character.HumanoidRootPart.CFrame + Vector3.new(0,200,0)
    end
 end)
 
-----------------------------------------------------------------
--- FARM TAB
-----------------------------------------------------------------
+Section(TabF, "Tự động")
 local autoFarm = false
-Section(TabFarm, "Tự động")
-Toggle(TabFarm, "💰 Auto nhặt Coins", false, function(v) autoFarm = v end)
-
+Toggle(TabF, "💰 Auto Coins", false, function(v) autoFarm = v end)
 task.spawn(function()
    while true do
-      task.wait(0.4)
+      task.wait(0.5)
       if autoFarm then
-         for _, v in pairs(workspace:GetDescendants()) do
-            if v:IsA("ProximityPrompt") and v.Parent then
-               local ch = LP.Character
-               if ch and ch:FindFirstChild("HumanoidRootPart") then
-                  local root = v.Parent:IsA("BasePart") and v.Parent or v.Parent:FindFirstChildWhichIsA("BasePart")
-                  if root and (root.Position - ch.HumanoidRootPart.Position).Magnitude < 100 then
-                     pcall(function() fireproximityprompt(v) end)
-                  end
+         pcall(function()
+            for _, v in pairs(workspace:GetDescendants()) do
+               if v:IsA("ProximityPrompt") and v.Parent then
+                  fireproximityprompt(v)
                end
             end
-         end
+         end)
       end
    end
 end)
 
-----------------------------------------------------------------
--- MISC TAB
-----------------------------------------------------------------
-Section(TabMisc, "Tiện ích")
-Button(TabMisc, "🛡 Bật Anti-AFK", function()
-   local vu = game:GetService("VirtualUser")
-   LP.Idled:Connect(function()
-      vu:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
-      task.wait(1)
-      vu:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+Section(TabM, "Tiện ích")
+Button(TabM, "🛡 Anti-AFK", function()
+   pcall(function()
+      local vu = game:GetService("VirtualUser")
+      LP.Idled:Connect(function()
+         vu:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+         task.wait(1)
+         vu:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+      end)
    end)
-   Label(TabMisc, "✅ Anti-AFK đã bật")
+   Label(TabM, "✅ Anti-AFK bật")
 end)
-Button(TabMisc, "🔁 Rejoin Server", function() TPS:Teleport(game.PlaceId, LP) end)
-Button(TabMisc, "🌍 Server Hop", function()
-   local ok, res = pcall(function()
-      return game:HttpGet("https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/0?sortOrder=Asc&limit=100")
-   end)
-   if ok then
-      local data = Http:JSONDecode(res)
+Button(TabM, "🔁 Rejoin", function()
+   pcall(function() game:GetService("TeleportService"):Teleport(game.PlaceId, LP) end)
+end)
+Button(TabM, "🌍 Server Hop", function()
+   pcall(function()
+      local http = game:GetService("HttpService")
+      local data = http:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/0?sortOrder=Asc&limit=100"))
       for _, s in pairs(data.data) do
          if s.playing < s.maxPlayers and s.id ~= game.JobId then
-            TPS:TeleportToPlaceInstance(game.PlaceId, s.id)
+            game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, s.id)
             return
          end
       end
-   end
+   end)
 end)
 
-----------------------------------------------------------------
--- DEBUG TAB
-----------------------------------------------------------------
-Section(TabDebug, "Công cụ")
-Button(TabDebug, "🔍 Quét nút Block", function()
+Section(TabD, "Công cụ")
+Button(TabD, "🔍 Quét nút Block", function()
    CachedBtn = nil; CachedAt = 0
-   local btn = GetBlockButton()
-   if btn then
-      Label(TabDebug, "✅ " .. btn.Name)
-   else
-      Label(TabDebug, "❌ Không thấy")
-   end
+   local b = GetBlockBtn()
+   if b then Label(TabD, "✅ Tìm: " .. b.Name) else Label(TabD, "❌ Không thấy") end
 end)
-Button(TabDebug, "🧪 Test Block", function()
-   LastBlock = 0; PerformBlock()
-   Label(TabDebug, "🧪 count: " .. BlockCount)
+Button(TabD, "🧪 Test Block", function()
+   LastBlock = 0; PerformBlock(); Label(TabD, "🧪 count: " .. BlockCount)
 end)
-Button(TabDebug, "🧹 Clear cache", function()
-   CachedBtn = nil; CachedAt = 0
-   Label(TabDebug, "🧹 OK")
-end)
+Button(TabD, "🧹 Clear", function() CachedBtn = nil; CachedAt = 0; Label(TabD, "🧹 OK") end)
 
-----------------------------------------------------------------
--- INFO TAB
-----------------------------------------------------------------
-Section(TabInfo, "Tài khoản")
-Label(TabInfo, "👤 @" .. LP.Name)
-Label(TabInfo, "✨ " .. LP.DisplayName)
-Label(TabInfo, "🆔 " .. tostring(LP.UserId))
-Label(TabInfo, "📅 " .. LP.AccountAge .. " ngày")
-Section(TabInfo, "Phiên")
-Label(TabInfo, "📱 " .. (IsMobile and "Mobile" or "PC"))
-Label(TabInfo, "🎮 " .. game.PlaceId)
-local countLbl = Label(TabInfo, "🛡 Blocks: 0")
+Section(TabI, "Tài khoản")
+Label(TabI, "👤 @" .. LP.Name)
+Label(TabI, "✨ " .. LP.DisplayName)
+Label(TabI, "🆔 " .. tostring(LP.UserId))
+Label(TabI, "📅 " .. LP.AccountAge .. " ngày")
+Label(TabI, "📱 " .. (IsMobile and "Mobile" or "PC"))
+Label(TabI, "🎮 " .. game.PlaceId)
+local countLbl = Label(TabI, "🛡 Blocks: 0")
 task.spawn(function()
    while countLbl and countLbl.Parent do
-      countLbl.Text = "🛡 Blocks: " .. BlockCount
+      pcall(function() countLbl.Text = "🛡 Blocks: " .. BlockCount end)
       task.wait(1)
    end
 end)
 
 ----------------------------------------------------------------
--- TOGGLE ĐÓNG/MỞ (FIX TRIỆT ĐỂ)
+-- 12) TOGGLE ĐÓNG/MỞ - TÁCH BIỆT
 ----------------------------------------------------------------
-local menuOpen = true
 Tog.MouseButton1Click:Connect(function()
-   menuOpen = not menuOpen
-   Main.Visible = menuOpen
+   Main.Visible = not Main.Visible
 end)
+
 CB.MouseButton1Click:Connect(function()
-   menuOpen = false
    Main.Visible = false
 end)
 
--- Hiện menu ngay
+----------------------------------------------------------------
+-- 13) KÉO THẢ
+----------------------------------------------------------------
+do
+   local drag, ds, sp
+   Head.InputBegan:Connect(function(i)
+      if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+         drag = true; ds = i.Position; sp = Main.Position
+      end
+   end)
+   Head.InputEnded:Connect(function(i)
+      if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+         drag = false
+      end
+   end)
+   UIS.InputChanged:Connect(function(i)
+      if drag and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then
+         local d = i.Position - ds
+         Main.Position = UDim2.new(sp.X.Scale, sp.X.Offset + d.X, sp.Y.Scale, sp.Y.Offset + d.Y)
+      end
+   end)
+end
+
+----------------------------------------------------------------
+-- 14) MỞ MENU NGAY (không loading - cho test nhanh)
+----------------------------------------------------------------
 Main.Visible = true
