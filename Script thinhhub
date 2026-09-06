@@ -1,0 +1,207 @@
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+-- Link Netlify của bạn
+local WEB_KEY_URL = "https://creative-twilight-7c2b97.netlify.app/"
+
+-- Tạo GUI
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "Gojo02S_TeleportSystem"
+ScreenGui.ResetOnSpawn = false
+
+local success, _ = pcall(function()
+    ScreenGui.Parent = game:GetService("CoreGui")
+end)
+if not success then
+    ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+end
+
+-- ==================== 1. KHUNG NHẬP KEY ====================
+local KeyFrame = Instance.new("Frame", ScreenGui)
+KeyFrame.Size = UDim2.new(0, 360, 0, 220)
+KeyFrame.Position = UDim2.new(0.5, -180, 0.5, -110)
+KeyFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
+KeyFrame.BorderSizePixel = 0
+Instance.new("UICorner", KeyFrame).CornerRadius = UDim.new(0, 12)
+
+local KeyTitle = Instance.new("TextLabel", KeyFrame)
+KeyTitle.Size = UDim2.new(1, 0, 0, 40)
+KeyTitle.Position = UDim2.new(0, 0, 0, 15)
+KeyTitle.Text = "GOJO 0.2s - KEY SYSTEM"
+KeyTitle.TextColor3 = Color3.fromRGB(0, 220, 255)
+KeyTitle.TextSize = 18
+KeyTitle.Font = Enum.Font.GothamBold
+KeyTitle.BackgroundTransparency = 1
+
+local KeyInput = Instance.new("TextBox", KeyFrame)
+KeyInput.Size = UDim2.new(0.8, 0, 0, 40)
+KeyInput.Position = UDim2.new(0.1, 0, 0.32, 0)
+KeyInput.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
+KeyInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+KeyInput.PlaceholderText = "Dán Key từ Web Netlify vào đây..."
+KeyInput.PlaceholderColor3 = Color3.fromRGB(120, 120, 140)
+KeyInput.Font = Enum.Font.Gotham
+KeyInput.TextSize = 13
+Instance.new("UICorner", KeyInput).CornerRadius = UDim.new(0, 8)
+
+local SubmitBtn = Instance.new("TextButton", KeyFrame)
+SubmitBtn.Size = UDim2.new(0.38, 0, 0, 38)
+SubmitBtn.Position = UDim2.new(0.1, 0, 0.62, 0)
+SubmitBtn.BackgroundColor3 = Color3.fromRGB(0, 200, 120)
+SubmitBtn.Text = "Xác Nhận"
+SubmitBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+SubmitBtn.Font = Enum.Font.GothamBold
+SubmitBtn.TextSize = 14
+Instance.new("UICorner", SubmitBtn).CornerRadius = UDim.new(0, 8)
+
+local GetKeyBtn = Instance.new("TextButton", KeyFrame)
+GetKeyBtn.Size = UDim2.new(0.38, 0, 0, 38)
+GetKeyBtn.Position = UDim2.new(0.52, 0, 0.62, 0)
+GetKeyBtn.BackgroundColor3 = Color3.fromRGB(120, 80, 220)
+GetKeyBtn.Text = "Copy Link Web"
+GetKeyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+GetKeyBtn.Font = Enum.Font.GothamBold
+GetKeyBtn.TextSize = 13
+Instance.new("UICorner", GetKeyBtn).CornerRadius = UDim.new(0, 8)
+
+local StatusLabel = Instance.new("TextLabel", KeyFrame)
+StatusLabel.Size = UDim2.new(1, 0, 0, 20)
+StatusLabel.Position = UDim2.new(0, 0, 0.85, 0)
+StatusLabel.Text = ""
+StatusLabel.TextColor3 = Color3.fromRGB(255, 80, 80)
+StatusLabel.TextSize = 12
+StatusLabel.Font = Enum.Font.Gotham
+StatusLabel.BackgroundTransparency = 1
+
+-- ==================== 2. MENU SKILL GOJO 0.2s ====================
+local MainFrame = Instance.new("Frame", ScreenGui)
+MainFrame.Size = UDim2.new(0, 320, 0, 180)
+MainFrame.Position = UDim2.new(0.5, -160, 0.5, -90)
+MainFrame.BackgroundColor3 = Color3.fromRGB(12, 12, 20)
+MainFrame.BorderSizePixel = 0
+MainFrame.Visible = false
+MainFrame.Active = true
+MainFrame.Draggable = true
+Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 12)
+
+local MainTitle = Instance.new("TextLabel", MainFrame)
+MainTitle.Size = UDim2.new(1, 0, 0, 40)
+MainTitle.Text = "GOJO 0.2s - TELEPORT TARGET"
+MainTitle.TextColor3 = Color3.fromRGB(0, 220, 255)
+MainTitle.TextSize = 15
+MainTitle.Font = Enum.Font.GothamBold
+MainTitle.BackgroundTransparency = 1
+
+local SkillBtn = Instance.new("TextButton", MainFrame)
+SkillBtn.Size = UDim2.new(0.85, 0, 0, 50)
+SkillBtn.Position = UDim2.new(0.075, 0, 0.35, 0)
+SkillBtn.BackgroundColor3 = Color3.fromRGB(130, 0, 255)
+SkillBtn.Text = "⚡ BÀNH TRƯỚNG LĨNH VỰC 0.2s"
+SkillBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+SkillBtn.Font = Enum.Font.GothamBold
+SkillBtn.TextSize = 13
+Instance.new("UICorner", SkillBtn).CornerRadius = UDim.new(0, 10)
+
+-- ==================== 3. LOGIC DỊCH CHUYỂN MỤC TIÊU ====================
+
+local isCooldown = false
+
+-- Hàm lọc và sắp xếp người chơi theo số máu ít nhất
+local function getSortedPlayersByHealth()
+    local targets = {}
+    for _, plr in pairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+            local hum = plr.Character:FindFirstChildOfClass("Humanoid")
+            if hum and hum.Health > 0 then
+                table.insert(targets, {
+                    Player = plr,
+                    HRP = plr.Character.HumanoidRootPart,
+                    Health = hum.Health
+                })
+            end
+        end
+    end
+
+    -- Sắp xếp máu tăng dần (Ít máu nhất đứng đầu)
+    table.sort(targets, function(a, b)
+        return a.Health < b.Health
+    end)
+
+    return targets
+end
+
+-- Chức năng dịch chuyển 2 mục tiêu
+local function executeTeleportSequence()
+    if isCooldown then return end
+
+    local char = LocalPlayer.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+    local myHrp = char.HumanoidRootPart
+
+    local targets = getSortedPlayersByHealth()
+
+    if #targets == 0 then
+        SkillBtn.Text = "Không có mục tiêu xung quanh!"
+        task.wait(1.5)
+        SkillBtn.Text = "⚡ BÀNH TRƯỚNG LĨNH VỰC 0.2s"
+        return
+    end
+
+    isCooldown = true
+    SkillBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 80)
+
+    -- 1. Dịch chuyển đến người ÍT MÁU NHẤT (Ở lại 2 giây)
+    local target1 = targets[1]
+    if target1 and target1.HRP then
+        SkillBtn.Text = "🎯 Đang áp sát: " .. target1.Player.DisplayName .. " (2s)"
+        -- Dịch chuyển ra phía sau lưng 3 stud
+        myHrp.CFrame = target1.HRP.CFrame * CFrame.new(0, 0, 3)
+        task.wait(2)
+    end
+
+    -- 2. Dịch chuyển sang NGƯỜI CHƠI KHÁC (Ở lại 1 giây)
+    if #targets >= 2 then
+        local target2 = targets[2]
+        if target2 and target2.HRP then
+            SkillBtn.Text = "⚡ Đổi mục tiêu: " .. target2.Player.DisplayName .. " (1s)"
+            myHrp.CFrame = target2.HRP.CFrame * CFrame.new(0, 0, 3)
+            task.wait(1)
+        end
+    end
+
+    -- 3. Hồi chiêu 5 giây
+    SkillBtn.Text = "Đang hồi chiêu (5s)..."
+    task.wait(5)
+
+    isCooldown = false
+    SkillBtn.Text = "⚡ BÀNH TRƯỚNG LĨNH VỰC 0.2s"
+    SkillBtn.BackgroundColor3 = Color3.fromRGB(130, 0, 255)
+end
+
+SkillBtn.MouseButton1Click:Connect(executeTeleportSequence)
+
+-- ==================== 4. XÁC THỰC KEY ====================
+
+GetKeyBtn.MouseButton1Click:Connect(function()
+    setclipboard(WEB_KEY_URL)
+    StatusLabel.TextColor3 = Color3.fromRGB(100, 220, 255)
+    StatusLabel.Text = "Đã copy link Netlify vào bộ nhớ!"
+end)
+
+local function getValidKey()
+    local dateTable = os.date("!*t", os.time() + 7 * 3600)
+    return string.format("AZIET-%02d%02d%04d", dateTable.day, dateTable.month, dateTable.year)
+end
+
+SubmitBtn.MouseButton1Click:Connect(function()
+    local userKey = KeyInput.Text:upper():gsub("%s+", "")
+    local expectedKey = getValidKey()
+
+    if userKey == expectedKey then
+        KeyFrame:Destroy()
+        MainFrame.Visible = true
+    else
+        StatusLabel.TextColor3 = Color3.fromRGB(255, 80, 80)
+        StatusLabel.Text = "Key sai hoặc đã hết hạn!"
+    end
+end)
